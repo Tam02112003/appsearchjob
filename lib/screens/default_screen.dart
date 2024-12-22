@@ -2,17 +2,18 @@ import 'package:appsearchjob/models/job_class.dart';
 import 'package:appsearchjob/models/theme_class.dart';
 import 'package:appsearchjob/screens/job_detail_screen.dart';
 import 'package:appsearchjob/screens/sign_in_screen.dart';
-import 'package:appsearchjob/services/api_service.dart';
-import 'package:appsearchjob/utils/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../services/api_service.dart';
+import '../utils/auth.dart';
 
 class DefaultScreen extends StatelessWidget {
   const DefaultScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Truy cập vào ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
       title: 'Job Search App',
@@ -32,24 +33,44 @@ class DefaultScreen extends StatelessWidget {
       home: JobSearchScreen(
         isDarkMode: themeProvider.isDarkMode,
         onThemeChanged: (isDark) {
-          themeProvider.toggleTheme(); // Gọi hàm để chuyển đổi chế độ
+          themeProvider.toggleTheme();
         },
       ),
     );
   }
 }
 
-class JobSearchScreen extends StatelessWidget {
-  final AuthService _authService = AuthService();
-  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
-  List<JobPost> _jobPosts = [];
-  String username = 'Đang tải...';
-
-
+class JobSearchScreen extends StatefulWidget {
   final bool isDarkMode;
   final ValueChanged<bool> onThemeChanged;
 
   JobSearchScreen({super.key, required this.isDarkMode, required this.onThemeChanged});
+
+  @override
+  _JobSearchScreenState createState() => _JobSearchScreenState();
+}
+
+class _JobSearchScreenState extends State<JobSearchScreen> {
+  List<JobPost> _jobPosts = [];
+  final AuthService _authService = AuthService();
+  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJobPosts(); // Tải dữ liệu ngay khi khởi tạo
+  }
+
+  Future<void> _loadJobPosts() async {
+    try {
+      final posts = await _apiService.fetchItems();
+      setState(() {
+        _jobPosts = posts.map<JobPost>((json) => JobPost.fromJson(json)).toList();
+      });
+    } catch (e) {
+      print('Error loading job posts: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +92,9 @@ class JobSearchScreen extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: Icon(isDarkMode ? Icons.wb_sunny : Icons.nightlight_round),
+            icon: Icon(widget.isDarkMode ? Icons.wb_sunny : Icons.nightlight_round),
             onPressed: () {
-              onThemeChanged(isDarkMode); // Chuyển đổi chế độ
+              widget.onThemeChanged(widget.isDarkMode);
             },
           ),
         ],
@@ -97,52 +118,21 @@ class JobSearchScreen extends StatelessWidget {
                 hintText: 'Tìm kiếm việc làm...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
-                  borderSide: BorderSide(color: isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
+                  borderSide: BorderSide(color: widget.isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
                 ),
-                prefixIcon: Icon(Icons.search, color: isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
+                prefixIcon: Icon(Icons.search, color: widget.isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
                 filled: true,
-                fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                fillColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
               ),
               style: const TextStyle(color: Colors.black),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  FilterChip(
-                    label: Text(
-                      'Remote',
-                      style: TextStyle(color: isDarkMode ? Colors.white : Colors.black), // Điều chỉnh màu chữ
-                    ),
-                    onSelected: (selected) {},
-                    selected: false,
-                    selectedColor: const Color(0xFF4A90E2),
-                    backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
-                  ),
-                  const SizedBox(width: 8),
-                  FilterChip(
-                    label: Text(
-                      'Marketing Manager',
-                      style: TextStyle(color: isDarkMode ? Colors.white : Colors.black), // Điều chỉnh màu chữ
-                    ),
-                    onSelected: (selected) {},
-                    selected: false,
-                    selectedColor: const Color(0xFF4A90E2),
-                    backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
               itemCount: _jobPosts.length,
               itemBuilder: (context, index) {
-                return JobCard(job: _jobPosts[index], isDarkMode: isDarkMode);
+                final jobPost = _jobPosts[index];
+                return JobCard(job: jobPost, isDarkMode: widget.isDarkMode);
               },
             ),
           ),
@@ -162,44 +152,26 @@ class JobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.all(8.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
       elevation: 5,
-      color: isDarkMode ? Colors.grey[850] : Colors.white,
+      color: isDarkMode ? Colors.grey[800] : Colors.white,
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16.0),
-        // leading:
-        // ClipOval(
-        //   child: Image.asset(
-        //     job.imageUrl,
-        //     width: 50,
-        //     height: 50,
-        //     fit: BoxFit.cover,
-        //   ),
-        // ),
         title: Text(
           job.title,
           style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
         ),
         subtitle: Text(
           job.description,
-          style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
+          style: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
         ),
-        trailing: TextButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => JobDetailScreen(job: job)),
-            );
-          },
-          style: TextButton.styleFrom(
-            backgroundColor: isDarkMode ? Colors.grey[700] : Colors.blue, // Màu nền
-            padding: EdgeInsets.symmetric(horizontal: 16.0), // Thêm padding nếu cần
-          ),
-          child: Text('Xem chi tiết',style: TextStyle(color: isDarkMode ? Colors.yellowAccent : Colors.yellowAccent),
-        ),
-        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => JobDetailScreen(job: job),
+            ),
+          );
+        },
       ),
     );
   }

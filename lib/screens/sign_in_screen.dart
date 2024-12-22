@@ -15,7 +15,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _obscureText = true; // Biến để kiểm soát việc hiển thị mật khẩu
-
+  String? _errorMessage; // Biến để lưu thông báo lỗi
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context); // Truy cập ThemeProvider
@@ -77,6 +77,15 @@ class _SignInScreenState extends State<SignInScreen> {
               style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black),
             ),
             SizedBox(height: 20),
+            // Hiển thị thông báo lỗi nếu có
+            if (_errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(color: Colors.red, fontSize: 14),
+                ),
+              ),
 
             // Sign In Button
             ElevatedButton(
@@ -84,18 +93,31 @@ class _SignInScreenState extends State<SignInScreen> {
                 final username = usernameController.text;
                 final password = passwordController.text;
 
-                // Giả định có một dịch vụ xác thực (authService) để xử lý đăng nhập
-                final success = await authService.signIn(username, password);
+                // Kiểm tra thông tin đầu vào
+                if (username.isEmpty || password.isEmpty) {
+                  _showErrorDialog('Vui lòng nhập cả email và mật khẩu.');
+                  return;
+                }
 
-                if (success) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Đăng nhập thất bại. Vui lòng thử lại.')),
-                  );
+                try {
+                  final success = await authService.signIn(username, password);
+                  if (success) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                    );
+                  } else {
+                    _showErrorDialog('Đăng nhập thất bại. Tài khoản hoặc mật khẩu không đúng.');
+                  }
+                } catch (e) {
+                  // Xử lý các lỗi cụ thể
+                  if (e.toString().contains('Network error')) {
+                    _showErrorDialog('Lỗi kết nối. Vui lòng kiểm tra internet của bạn.');
+                  } else if (e.toString().contains('Invalid credentials')) {
+                    _showErrorDialog('Tài khoản hoặc mật khẩu không đúng.');
+                  } else {
+                    _showErrorDialog('Đã có lỗi xảy ra: ${e.toString()}');
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -133,6 +155,26 @@ class _SignInScreenState extends State<SignInScreen> {
           ],
         ),
       ),
+    );
+  }
+  // Hàm hiển thị thông báo lỗi dạng popup
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Lỗi'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: Text('Đóng'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

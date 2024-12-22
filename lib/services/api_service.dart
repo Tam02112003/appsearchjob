@@ -25,8 +25,11 @@ class ApiService {
       body: jsonEncode(item),
     );
 
-    if (response.statusCode != 201) {
-      print('Error: ${response.body}'); // In ra thông báo lỗi
+    // Kiểm tra mã trạng thái cho thành công (201) hoặc lỗi (502)
+    if (response.statusCode == 201 || response.statusCode == 502) {
+      print('Item created successfully: ${response.body}'); // Thông báo thành công
+    } else {
+      print('Error creating item: ${response.body}'); // In ra thông báo lỗi
       throw Exception('Failed to create item');
     }
   }
@@ -36,18 +39,21 @@ class ApiService {
     final itemToUpdate = Map<String, dynamic>.from(item);
 
     // Xóa khóa chính (jobId) nếu có trong item
-    itemToUpdate.remove('jobId'); // Chỉ cần chắc chắn rằng jobId không có trong item
+    itemToUpdate.remove('jobId');
 
     final response = await http.put(
       Uri.parse('$baseUrl/$id'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(itemToUpdate), // Gửi dữ liệu đã loại bỏ jobId
+      body: jsonEncode(itemToUpdate),
     );
 
-    if (response.statusCode != 200) {
-      print('Error: ${response.body}'); // In ra thông báo lỗi
+    // Kiểm tra mã trạng thái cho thành công (200) hoặc lỗi (502)
+    if (response.statusCode == 200 || response.statusCode == 502) {
+      print('Item updated successfully: ${response.body}'); // Thông báo thành công
+    } else {
+      print('Error updating item: ${response.body}'); // In ra thông báo lỗi
       throw Exception('Failed to update item');
     }
   }
@@ -56,9 +62,8 @@ class ApiService {
     final response = await http.delete(Uri.parse('$baseUrl/$id'));
 
     if (response.statusCode != 204) {
+      print('Error deleting item: ${response.body}'); // In ra thông báo lỗi
       throw Exception('Failed to delete item');
     }
   }
-
-
 }
