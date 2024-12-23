@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../models/application_class.dart';
+
 class ApiService {
   final String baseUrl;
 
@@ -15,6 +17,17 @@ class ApiService {
       throw Exception('Failed to load items');
     }
   }
+
+  Future<List<dynamic>> getMyJobs(String userId) async {
+    final response = await http.get(Uri.parse('$baseUrl?userId=$userId'));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['body'];
+    } else {
+      throw Exception('Failed to load jobs');
+    }
+  }
+
 
   Future<void> createItem(Map<String, dynamic> item) async {
     final response = await http.post(
@@ -36,7 +49,8 @@ class ApiService {
     final itemToUpdate = Map<String, dynamic>.from(item);
 
     // Xóa khóa chính (jobId) nếu có trong item
-    itemToUpdate.remove('jobId'); // Chỉ cần chắc chắn rằng jobId không có trong item
+    itemToUpdate.remove(
+        'jobId'); // Chỉ cần chắc chắn rằng jobId không có trong item
 
     final response = await http.put(
       Uri.parse('$baseUrl/$id'),
@@ -60,5 +74,23 @@ class ApiService {
     }
   }
 
+// Hàm gửi đơn ứng tuyển với jobId được thêm vào URL
+  Future<void> sendApplication(JobApplication application) async {
+    final url = Uri.parse('$baseUrl/applications/${application.jobId}'); // Thêm jobId vào URL
+    final body = jsonEncode(application.toJson());
 
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: body,
+    );
+
+    if (response.statusCode != 201) {
+      print('Error: ${response.statusCode}, ${response.body}');
+      throw Exception('Failed to send application');
+    }
+  }
 }
+

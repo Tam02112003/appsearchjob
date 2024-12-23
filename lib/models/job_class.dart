@@ -5,6 +5,7 @@ class JobPost {
   final String company;
   final String location; // Thêm địa chỉ
   final double salary; // Thêm lương theo giờ
+  final String userId; // ID của người đăng
 
   JobPost({
     required this.id,
@@ -13,6 +14,7 @@ class JobPost {
     required this.company,
     required this.location,
     required this.salary,
+    required this.userId, // Thêm userId vào constructor
   });
 
   factory JobPost.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class JobPost {
       company: json['company'],
       location: json['location'], // Lấy địa chỉ từ JSON
       salary: json['salary']?.toDouble() ?? 0.0, // Lấy lương theo giờ từ JSON
+      userId: json['userId'], // Lấy userId từ JSON
     );
   }
 
@@ -34,6 +37,7 @@ class JobPost {
       'company': company,
       'location': location, // Thêm địa chỉ vào JSON
       'salary': salary, // Thêm lương theo giờ vào JSON
+      'userId': userId, // Thêm userId vào JSON
     };
   }
 }

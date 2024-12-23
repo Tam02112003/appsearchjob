@@ -8,6 +8,7 @@ import 'package:appsearchjob/screens/job_detail_screen.dart';
 import 'package:appsearchjob/screens/my_application_screen.dart';
 import '../models/job_class.dart';
 import '../services/api_service.dart';
+import 'my_job_post_screen.dart';
 
 class JobSearchApp extends StatelessWidget {
   const JobSearchApp({super.key});
@@ -35,7 +36,8 @@ class JobSearchScreen extends StatefulWidget {
 
 class _JobSearchScreenState extends State<JobSearchScreen> {
   final AuthService _authService = AuthService();
-  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
+  final ApiService _apiService = ApiService(
+      'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   List<JobPost> _jobPosts = [];
   String username = 'Đang tải...';
 
@@ -57,10 +59,14 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     try {
       final posts = await _apiService.fetchItems();
       setState(() {
-        _jobPosts = posts.map<JobPost>((json) => JobPost.fromJson(json)).toList();
+        _jobPosts =
+            posts.map<JobPost>((json) => JobPost.fromJson(json)).toList();
       });
     } catch (e) {
       print('Error loading job posts: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading job posts: $e')),
+      );
     }
   }
 
@@ -75,7 +81,8 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Tìm kiếm việc làm', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+        title: Text('Tìm kiếm việc làm',
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
         backgroundColor: isDarkMode ? Colors.grey[900] : Colors.cyanAccent,
         automaticallyImplyLeading: false,
         actions: [
@@ -86,14 +93,24 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.list),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MyApplicationsScreen()),
-              );
-            },
-          ),
+              icon: const Icon(Icons.list),
+              onPressed: () async {
+                // Lấy userId từ AuthService
+                final userId = await _authService.getCurrentUserId();
+                if (userId != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            MyJobPostsScreen(userId: userId)),
+                  );
+                } else {
+                  // Hiển thị thông báo lỗi nếu userId là null
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Không thể lấy userId.')),
+                  );
+                }
+              }),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
@@ -122,8 +139,10 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm việc làm...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30.0)),
-                prefixIcon: Icon(Icons.search, color: isDarkMode ? Colors.white : Colors.blue),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30.0)),
+                prefixIcon: Icon(Icons.search,
+                    color: isDarkMode ? Colors.white : Colors.blue),
                 filled: true,
                 fillColor: isDarkMode ? Colors.grey[900] : Colors.white,
               ),
@@ -135,7 +154,10 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
               itemCount: _jobPosts.length,
               itemBuilder: (context, index) {
                 final jobPost = _jobPosts[index];
-                return JobCard(job: jobPost, isDarkMode: isDarkMode, onRefresh: _refreshJobPosts);
+                return JobCard(
+                    job: jobPost,
+                    isDarkMode: isDarkMode,
+                    onRefresh: _refreshJobPosts);
               },
             ),
           ),
@@ -148,10 +170,15 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
 class JobCard extends StatelessWidget {
   final JobPost job;
   final bool isDarkMode;
-  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
+  final ApiService _apiService = ApiService(
+      'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final VoidCallback onRefresh;
 
-   JobCard({super.key, required this.job, required this.isDarkMode, required this.onRefresh});
+  JobCard(
+      {super.key,
+      required this.job,
+      required this.isDarkMode,
+      required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +190,9 @@ class JobCard extends StatelessWidget {
       child: ListTile(
         title: Text(
           job.title,
-          style: TextStyle(fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black),
         ),
         subtitle: Text(
           job.description,
@@ -179,13 +208,15 @@ class JobCard extends StatelessWidget {
           );
         },
         trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: isDarkMode ? Colors.white : Colors.black),
+          icon: Icon(Icons.more_vert,
+              color: isDarkMode ? Colors.white : Colors.black),
           onSelected: (value) async {
             if (value == 'edit') {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditJobScreen(jobPost: job), // Truyền jobPost đúng
+                  builder: (context) =>
+                      EditJobScreen(jobPost: job), // Truyền jobPost đúng
                 ),
               );
               if (result == true) {
@@ -193,7 +224,8 @@ class JobCard extends StatelessWidget {
               }
             } else if (value == 'delete') {
               // Xử lý xóa bài đăng
-              await _deleteJobPost(job.id, context); // Gọi hàm xóa với ID bài đăng
+              await _deleteJobPost(
+                  job.id, context); // Gọi hàm xóa với ID bài đăng
             }
           },
           itemBuilder: (context) => [
@@ -220,7 +252,8 @@ class JobCard extends StatelessWidget {
         content: Text('Bạn có chắc chắn muốn xóa bài đăng này?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false), // Đóng dialog và không xóa
+            onPressed: () =>
+                Navigator.pop(context, false), // Đóng dialog và không xóa
             child: Text('Hủy'),
           ),
           TextButton(

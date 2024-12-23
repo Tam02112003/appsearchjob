@@ -1,3 +1,4 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:appsearchjob/models/theme_class.dart'; // Đảm bảo đã import ThemeProvider
@@ -18,6 +19,8 @@ class _JobPostScreenState extends State<JobPostScreen> {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController salaryController = TextEditingController();
 
+
+
   Future<void> _createPost() async {
     // Kiểm tra nếu tiêu đề hoặc mô tả trống
     if (titleController.text.isEmpty || descriptionController.text.isEmpty) {
@@ -26,6 +29,18 @@ class _JobPostScreenState extends State<JobPostScreen> {
       );
       return; // Dừng lại nếu không hợp lệ
     }
+
+    // Lấy userId từ Cognito
+    String currentUserId;
+    try {
+      var user = await Amplify.Auth.getCurrentUser();
+      currentUserId = user.userId; // Lưu userId
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể lấy thông tin người dùng: $e')),
+      );
+      return;
+    }
     final newPost = JobPost(
       id: generateJobId(), // ID sẽ được tạo ra từ server
       title: titleController.text,
@@ -33,6 +48,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
       company: companyController.text,
       location: locationController.text,
       salary: double.tryParse(salaryController.text) ?? 0.0,
+      userId: currentUserId, // Thêm userId vào bài đăng
     );
 
     try {
@@ -44,6 +60,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
       );
     }
   }
+
   //Hàm tạo JobID
   String generateJobId() {
     return 'job_${DateTime.now().millisecondsSinceEpoch}'; // Tạo ID duy nhất

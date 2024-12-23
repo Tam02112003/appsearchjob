@@ -59,7 +59,9 @@ class JobDetailScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ApplicationScreen(job: job)),
+                    MaterialPageRoute(
+                      builder: (context) => ApplicationScreen(job: job), // Truyền jobId vào đây
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(

@@ -1,14 +1,16 @@
-import 'package:appsearchjob/models/job_class.dart';
+import 'package:appsearchjob/models/application_class.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
-import 'package:appsearchjob/models/theme_class.dart'; // Đảm bảo import ThemeProvider
+import 'package:appsearchjob/models/theme_class.dart';
+import 'package:appsearchjob/services/api_service.dart';
+import '../models/job_class.dart'; // Import API service
 
 class ApplicationScreen extends StatefulWidget {
   final JobPost job;
 
-  const ApplicationScreen({super.key, required this.job});
+  const ApplicationScreen({Key? key, required this.job}) : super(key: key);
 
   @override
   _ApplicationScreenState createState() => _ApplicationScreenState();
@@ -16,7 +18,8 @@ class ApplicationScreen extends StatefulWidget {
 
 class _ApplicationScreenState extends State<ApplicationScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _educationController = TextEditingController();
+  final TextEditingController _experienceController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   File? _cvFile;
 
@@ -37,6 +40,37 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
       setState(() {
         _cvFile = File(file.path);
       });
+    }
+  }
+
+  Future<void> _submitApplication() async {
+    if (_nameController.text.isEmpty || _phoneController.text.isEmpty || _cvFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Vui lòng điền đầy đủ thông tin ứng tuyển!')),
+      );
+      return;
+    }
+
+    JobApplication application = JobApplication(
+      education: _educationController.text,
+      experience: _experienceController.text,
+      image: _cvFile!.path, // Đường dẫn đến file hình ảnh
+      jobId: widget.job.id, // Lấy jobId từ widget.job.id
+      name: _nameController.text,
+      phone: _phoneController.text,
+    );
+
+    final ApiService apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');
+    try {
+      await apiService.sendApplication(application);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Đơn ứng tuyển đã được gửi!')),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gửi đơn ứng tuyển thất bại: $e')),
+      );
     }
   }
 
@@ -62,7 +96,9 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
               const SizedBox(height: 16),
               _buildTextField('Họ và tên', _nameController, Icons.person, themeProvider),
               const SizedBox(height: 16),
-              _buildTextField('Email', _emailController, Icons.email, themeProvider),
+              _buildTextField('Trình độ học vấn', _educationController, Icons.school, themeProvider),
+              const SizedBox(height: 16),
+              _buildTextField('Kinh nghiệm làm việc', _experienceController, Icons.work, themeProvider),
               const SizedBox(height: 16),
               _buildTextField('Số điện thoại', _phoneController, Icons.phone, themeProvider),
               const SizedBox(height: 16),
@@ -90,11 +126,9 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
               const SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Hành động khi nhấn nút gửi
-                  },
+                  onPressed: _submitApplication,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: themeProvider.isDarkMode ? Colors.blueGrey : Colors.blue, // Màu nền theo chế độ
+                    backgroundColor: themeProvider.isDarkMode ? Colors.blueGrey : Colors.blue,
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
@@ -118,7 +152,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent), // Màu biểu tượng
+        prefixIcon: Icon(icon, color: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
           borderSide: BorderSide(color: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent),
@@ -128,8 +162,8 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
           borderSide: BorderSide(color: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent, width: 2.0),
         ),
       ),
-      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black), // Màu văn bản
-      cursorColor: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent, // Màu con trỏ
+      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black),
+      cursorColor: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent,
     );
   }
 }
