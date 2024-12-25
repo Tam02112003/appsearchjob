@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/theme_class.dart';
+import 'change_password_screen.dart';
+
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -57,7 +59,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Truy cập vào ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -65,64 +67,77 @@ class _AccountScreenState extends State<AccountScreen> {
         title: const Text('Tài khoản'),
         backgroundColor: themeProvider.isDarkMode ? Colors.grey[800] : Colors.blueAccent,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey[300],
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/profile-icon.png',
-                    fit: BoxFit.cover,
-                    width: 120,
-                    height: 120,
+      body: FutureBuilder<String?>(
+        future: _authService.getCurrentUsername(), // Lấy tên người dùng
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Lỗi: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data == null) {
+            return Center(child: Text('Không tìm thấy thông tin người dùng.'));
+          }
+
+          final username = snapshot.data!; // Lấy tên người dùng
+
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.grey[300],
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/profile-icon.png',
+                        fit: BoxFit.cover,
+                        width: 120,
+                        height: 120,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    username, // Hiển thị tên người dùng
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Thông tin cá nhân',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 32),
+                  //Các ListTile khác...
+                  // _buildListTile(context, Icons.person, 'Cập nhật thông tin người dùng', () {
+                  //   Navigator.push(
+                  //     context,
+                  //     MaterialPageRoute(builder: (context) => EmployerUpdateScreen()),
+                  //   );
+                  // }),
+                  _buildListTile(context, Icons.password, 'Thay đổi mật khẩu', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ChangePasswordScreen()),
+                    );
+                  }),
+                  _buildListTile(context, Icons.settings, 'Cài đặt', () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsScreen()),
+                    );
+                  }),
+                  _buildListTile(context, Icons.logout, 'Đăng xuất', () {
+                    _logout(context);
+                  }),
+                ],
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Tên người dùng',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Thông tin cá nhân',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              _buildListTile(context, Icons.person, 'Cập nhật thông tin', () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => EmployerUpdateScreen()),
-                );
-              }),
-              _buildListTile(context, Icons.work, 'Thêm kinh nghiệm làm việc', () {
-                // Chức năng thêm kinh nghiệm
-              }),
-              _buildListTile(context, Icons.password, 'Đổi mật khẩu', () {
-                // Chức năng đổi mật khẩu
-              }),
-              _buildListTile(context, Icons.settings, 'Cài đặt', () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()),
-                );
-              }),
-              _buildListTile(context, Icons.notifications, 'Thông báo', () {
-                // Chức năng thông báo
-              }),
-              _buildListTile(context, Icons.logout, 'Đăng xuất', () {
-                _logout(context);
-              }),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
-      backgroundColor: themeProvider.isDarkMode ? Colors.grey[900] : Colors.white, // Màu nền của body
+      backgroundColor: themeProvider.isDarkMode ? Colors.grey[900] : Colors.white,
     );
   }
 

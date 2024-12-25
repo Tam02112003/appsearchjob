@@ -50,6 +50,15 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
       );
       return;
     }
+    // Kiểm tra định dạng số điện thoại Việt Nam
+    final phoneRegex = RegExp(r'^(0[1-9]\d{8})$'); // Định dạng số điện thoại Việt Nam
+    if (!phoneRegex.hasMatch(_phoneController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Số điện thoại không hợp lệ!')),
+      );
+      return; // Dừng hàm nếu số điện thoại không hợp lệ
+    }
+
 
     JobApplication application = JobApplication(
       education: _educationController.text,
@@ -63,6 +72,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
     final ApiService apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');
     try {
       await apiService.sendApplication(application);
+      _notifyNewApplication(application); // Gọi hàm gửi thông báo
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Đơn ứng tuyển đã được gửi!')),
       );
@@ -72,6 +82,22 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
         SnackBar(content: Text('Gửi đơn ứng tuyển thất bại: $e')),
       );
     }
+  }
+
+  void _notifyNewApplication(JobApplication application) {
+    // Tạo thông báo cho ứng tuyển mới
+    final snackBar = SnackBar(
+      content: Text('${application.name} đã ứng tuyển cho công việc ${widget.job.title}.'),
+      // action: SnackBarAction(
+      //   label: 'Xem',
+      //   onPressed: () {
+      //     // Điều hướng đến màn hình chi tiết đơn ứng tuyển nếu cần
+      //   },
+      // ),
+    );
+
+    // Hiển thị thông báo
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override

@@ -26,6 +26,10 @@ dependencies:
   amplify_datastore: ^1.7.0
   amazon_cognito_identity_dart_2: ^3.7.0
   amplify_api: ^1.8.0
+  onesignal_flutter: ^5.2.9
+  intl: ^0.20.0
+  calendar_date_picker2: ^1.1.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -38,3 +42,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/congviec.jpg

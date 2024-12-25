@@ -28,6 +28,18 @@ class ApiService {
     }
   }
 
+  // Hàm mới để lấy các đơn ứng tuyển của một người dùng
+  Future<List<JobApplication>> getApplicationsByUserId(String userId) async {
+    final response = await http.get(Uri.parse('$baseUrl/applications?userId=$userId'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = json.decode(response.body)['body'];
+      return jsonList.map((json) => JobApplication.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load applications');
+    }
+  }
+
 
   Future<void> createItem(Map<String, dynamic> item) async {
     final response = await http.post(

@@ -49,18 +49,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 activeColor: Color(0xFF1DB954), // Màu cho nút bật
               ),
             ),
-            Divider(),
-            // Thêm cài đặt khác nếu cần
-            ListTile(
-              title: Text(
-                'Ngôn ngữ',
-                style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black),
-              ),
-              trailing: Icon(Icons.arrow_forward_ios, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
-              onTap: () {
-                // Chuyển đến trang chọn ngôn ngữ
-              },
-            ),
           ],
         ),
       ),

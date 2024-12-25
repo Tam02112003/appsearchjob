@@ -1,9 +1,11 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // Thêm import cho DateFormat
 import 'package:appsearchjob/models/theme_class.dart'; // Đảm bảo đã import ThemeProvider
 import '../models/job_class.dart';
 import '../services/api_service.dart';
+
 class JobPostScreen extends StatefulWidget {
   const JobPostScreen({super.key});
 
@@ -12,22 +14,66 @@ class JobPostScreen extends StatefulWidget {
 }
 
 class _JobPostScreenState extends State<JobPostScreen> {
-  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job'); // Thay bằng URL của bạn
+  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController companyController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final TextEditingController salaryController = TextEditingController();
+  final TextEditingController deadlineController = TextEditingController();
 
+  DateTime? selectedDeadline; // Biến để lưu ngày và giờ đã chọn
 
+  Future<void> _selectDeadline(BuildContext context) async {
+    // Mở DatePicker để chọn ngày
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDeadline ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+
+    // Nếu ngày được chọn, mở TimePicker để chọn giờ và phút
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(selectedDeadline ?? DateTime.now()),
+      );
+
+      if (pickedTime != null) {
+        setState(() {
+          // Kết hợp ngày và giờ đã chọn
+          selectedDeadline = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          deadlineController.text = DateFormat('yyyy-MM-dd HH:mm').format(selectedDeadline!); // Cập nhật controller
+        });
+      }
+    }
+  }
 
   Future<void> _createPost() async {
     // Kiểm tra nếu tiêu đề hoặc mô tả trống
-    if (titleController.text.isEmpty || descriptionController.text.isEmpty) {
+    if (titleController.text.isEmpty || descriptionController.text.isEmpty ||
+        companyController.text.isEmpty || locationController.text.isEmpty ||
+        salaryController.text.isEmpty || deadlineController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Vui lòng điền đầy đủ thông tin.')),
       );
       return; // Dừng lại nếu không hợp lệ
+    }
+
+    // Kiểm tra xem lương có phải là số hợp lệ không
+    double? salary = double.tryParse(salaryController.text);
+    if (salary == null || salary < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Vui lòng nhập lương hợp lệ')),
+      );
+      return; // Dừng hàm nếu lương không hợp lệ
     }
 
     // Lấy userId từ Cognito
@@ -41,6 +87,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
       );
       return;
     }
+
     final newPost = JobPost(
       id: generateJobId(), // ID sẽ được tạo ra từ server
       title: titleController.text,
@@ -49,6 +96,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
       location: locationController.text,
       salary: double.tryParse(salaryController.text) ?? 0.0,
       userId: currentUserId, // Thêm userId vào bài đăng
+      deadline: selectedDeadline, // Sử dụng ngày và giờ đã chọn
     );
 
     try {
@@ -61,10 +109,11 @@ class _JobPostScreenState extends State<JobPostScreen> {
     }
   }
 
-  //Hàm tạo JobID
+  // Hàm tạo JobID
   String generateJobId() {
     return 'job_${DateTime.now().millisecondsSinceEpoch}'; // Tạo ID duy nhất
   }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context); // Truy cập vào ThemeProvider
@@ -72,7 +121,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Đăng tin tuyển dụng'),
-        backgroundColor: themeProvider.isDarkMode ? Colors.grey[800] : Colors.blueAccent, // Sử dụng màu xám nhạt hơn
+        backgroundColor: themeProvider.isDarkMode ? Colors.grey[800] : Colors.blueAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -92,17 +141,19 @@ class _JobPostScreenState extends State<JobPostScreen> {
               _buildTextField('Công ty', companyController, Icons.home_work),
               const SizedBox(height: 16),
               _buildTextField('Địa chỉ', locationController, Icons.home_work),
-
               const SizedBox(height: 16),
               _buildTextField('Lương theo giờ', salaryController, Icons.attach_money),
               const SizedBox(height: 16),
-              const Text('Loại hình công việc', style: TextStyle(fontSize: 16)),
+              GestureDetector(
+                onTap: () => _selectDeadline(context), // Mở DatePicker và TimePicker khi nhấn
+                child: AbsorbPointer( // Ngăn không cho nhập tay
+                  child: _buildTextField('Hạn nộp (YYYY-MM-DD HH:mm)', deadlineController, Icons.calendar_today),
+                ),
+              ),
               const SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
-                  onPressed: ( ) {
-                    _createPost();
-                  },
+                  onPressed: _createPost,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
@@ -120,7 +171,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
           ),
         ),
       ),
-      backgroundColor: themeProvider.isDarkMode ? Colors.grey[900] : Colors.white, // Màu nền của body
+      backgroundColor: themeProvider.isDarkMode ? Colors.grey[900] : Colors.white,
     );
   }
 
@@ -141,8 +192,8 @@ class _JobPostScreenState extends State<JobPostScreen> {
           borderSide: BorderSide(color: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent, width: 2.0),
         ),
       ),
-      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black), // Màu chữ trong TextField
-      cursorColor: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent, // Màu con trỏ
+      style: TextStyle(color: themeProvider.isDarkMode ? Colors.white : Colors.black),
+      cursorColor: themeProvider.isDarkMode ? Colors.white : Colors.blueAccent,
     );
   }
 }

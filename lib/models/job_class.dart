@@ -6,7 +6,7 @@ class JobPost {
   final String location; // Thêm địa chỉ
   final double salary; // Thêm lương theo giờ
   final String userId; // ID của người đăng
-
+  final DateTime? deadline; // Hạn nộp
   JobPost({
     required this.id,
     required this.title,
@@ -15,6 +15,7 @@ class JobPost {
     required this.location,
     required this.salary,
     required this.userId, // Thêm userId vào constructor
+    required this.deadline, // Hạn nộp
   });
 
   factory JobPost.fromJson(Map<String, dynamic> json) {
@@ -26,6 +27,7 @@ class JobPost {
       location: json['location'], // Lấy địa chỉ từ JSON
       salary: json['salary']?.toDouble() ?? 0.0, // Lấy lương theo giờ từ JSON
       userId: json['userId'], // Lấy userId từ JSON
+      deadline: json['deadline'] != null ? DateTime.parse(json['deadline']) : null,  // Chuyển đổi từ chuỗi sang DateTime
     );
   }
 
@@ -38,6 +40,7 @@ class JobPost {
       'location': location, // Thêm địa chỉ vào JSON
       'salary': salary, // Thêm lương theo giờ vào JSON
       'userId': userId, // Thêm userId vào JSON
+      'deadline': deadline?.toIso8601String(), // Chuyển đổi DateTime thành chuỗi
     };
   }
 }

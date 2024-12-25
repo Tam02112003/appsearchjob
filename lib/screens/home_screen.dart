@@ -1,13 +1,13 @@
-import 'package:appsearchjob/screens/edit_job_screen.dart';
 import 'package:appsearchjob/utils/auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:appsearchjob/models/theme_class.dart';
 import 'package:appsearchjob/screens/add_job_screen.dart';
 import 'package:appsearchjob/screens/job_detail_screen.dart';
-import 'package:appsearchjob/screens/my_application_screen.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/job_class.dart';
 import '../services/api_service.dart';
+import 'my_application_screen.dart';
 import 'my_job_post_screen.dart';
 
 class JobSearchApp extends StatelessWidget {
@@ -16,7 +16,7 @@ class JobSearchApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Job Search App',
+      title: 'Recruiter Screen',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.grey[100],
@@ -39,7 +39,9 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
   final ApiService _apiService = ApiService(
       'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   List<JobPost> _jobPosts = [];
+  List<JobPost> _filteredJobPosts = [];
   String username = 'Đang tải...';
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -61,6 +63,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
       setState(() {
         _jobPosts =
             posts.map<JobPost>((json) => JobPost.fromJson(json)).toList();
+        _filteredJobPosts = _jobPosts; // Khởi tạo danh sách đã lọc
       });
     } catch (e) {
       print('Error loading job posts: $e');
@@ -70,8 +73,21 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     }
   }
 
-  void _refreshJobPosts() {
-    _loadJobPosts(); // Gọi lại hàm tải dữ liệu
+  Future<void> _refreshJobPosts() async {
+    await _loadJobPosts();
+  }
+
+  void _filterJobPosts(String query) {
+    setState(() {
+      _searchQuery = query;
+      _filteredJobPosts = _jobPosts.where((job) {
+        final titleMatch = job.title.toLowerCase().contains(query.toLowerCase());
+        final companyMatch = job.company.toLowerCase().contains(query.toLowerCase());
+        final locationMatch = job.location.toLowerCase().contains(query.toLowerCase());
+        final salaryMatch = job.salary.toString().contains(query);
+        return titleMatch || companyMatch || locationMatch || salaryMatch;
+      }).toList();
+    });
   }
 
   @override
@@ -88,24 +104,37 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // Hành động cho thông báo
+            onPressed: () async {
+              final userId = await _authService.getCurrentUserId();
+              if (userId != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => MyApplicationsScreen(
+                        userId: userId,
+                      )),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Không thể lấy userId.')),
+                );
+              }
             },
           ),
           IconButton(
               icon: const Icon(Icons.list),
               onPressed: () async {
-                // Lấy userId từ AuthService
                 final userId = await _authService.getCurrentUserId();
                 if (userId != null) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            MyJobPostsScreen(userId: userId)),
+                        builder: (context) => MyJobPostsScreen(
+                          userId: userId,
+                          onRefresh: _loadJobPosts,
+                        )),
                   );
                 } else {
-                  // Hiển thị thông báo lỗi nếu userId là null
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Không thể lấy userId.')),
                   );
@@ -119,51 +148,89 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
                 MaterialPageRoute(builder: (context) => const JobPostScreen()),
               );
               if (result == true) {
-                _refreshJobPosts(); // Tải lại danh sách bài đăng
+                _refreshJobPosts();
               }
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 150,
-            child: FittedBox(
-              child: Image.asset('assets/banner.png', fit: BoxFit.cover),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm việc làm...',
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0)),
-                prefixIcon: Icon(Icons.search,
-                    color: isDarkMode ? Colors.white : Colors.blue),
-                filled: true,
-                fillColor: isDarkMode ? Colors.grey[900] : Colors.white,
+      body: RefreshIndicator(
+        onRefresh: _refreshJobPosts,
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 200.0,
+              floating: false,
+              pinned: true,
+              automaticallyImplyLeading: false,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Image.asset(
+                  'assets/banner.png',
+                  fit: BoxFit.cover,
+                ),
               ),
-              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _jobPosts.length,
-              itemBuilder: (context, index) {
-                final jobPost = _jobPosts[index];
-                return JobCard(
-                    job: jobPost,
-                    isDarkMode: isDarkMode,
-                    onRefresh: _refreshJobPosts);
-              },
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SearchBarDelegate(
+                isDarkMode: isDarkMode,
+                onSearch: _filterJobPosts, // Gọi hàm lọc khi tìm kiếm
+              ),
             ),
-          ),
-        ],
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
+                  final jobPost = _filteredJobPosts[index];
+                  return JobCard(
+                      job: jobPost,
+                      isDarkMode: isDarkMode,
+                      onRefresh: _refreshJobPosts);
+                },
+                childCount: _filteredJobPosts.length,
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
+  final bool isDarkMode;
+  final Function(String) onSearch;
+
+  _SearchBarDelegate({required this.isDarkMode, required this.onSearch});
+
+  @override
+  double get minExtent => 80.0; // Chiều cao tối thiểu của thanh tìm kiếm
+
+  @override
+  double get maxExtent => 80.0; // Chiều cao tối đa của thanh tìm kiếm
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      color: isDarkMode ? Colors.grey[900] : Colors.white,
+      child: TextField(
+        onChanged: onSearch, // Gọi hàm lọc khi người dùng nhập
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm theo tiêu đề, công ty, địa điểm, lương...',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30.0),
+            borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.blue),
+          ),
+          prefixIcon: Icon(Icons.search, color: isDarkMode ? Colors.white : Colors.blue),
+        ),
+        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) {
+    return true; // Xây dựng lại nếu có thay đổi
   }
 }
 
@@ -174,109 +241,132 @@ class JobCard extends StatelessWidget {
       'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final VoidCallback onRefresh;
 
-  JobCard(
-      {super.key,
-      required this.job,
-      required this.isDarkMode,
-      required this.onRefresh});
+  JobCard({
+    super.key,
+    required this.job,
+    required this.isDarkMode,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(8.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-      elevation: 5,
-      color: isDarkMode ? Colors.grey[800] : Colors.white,
-      child: ListTile(
-        title: Text(
-          job.title,
-          style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? Colors.white : Colors.black),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue, Colors.purple],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        subtitle: Text(
-          job.description,
-          style: TextStyle(color: isDarkMode ? Colors.white54 : Colors.black54),
-        ),
-        onTap: () {
-          // Điều hướng đến JobDetailScreen khi nhấp vào bài đăng
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => JobDetailScreen(job: job),
-            ),
-          );
-        },
-        trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert,
-              color: isDarkMode ? Colors.white : Colors.black),
-          onSelected: (value) async {
-            if (value == 'edit') {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      EditJobScreen(jobPost: job), // Truyền jobPost đúng
+      ),
+      child: Card(
+        margin: const EdgeInsets.all(12.0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        elevation: 4,
+        color: Colors.white.withAlpha(204),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: AssetImage('assets/congviec.jpg'),
+              ),
+              const SizedBox(width: 16.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      job.title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: isDarkMode ? Colors.black : Colors.black,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Text(
+                      job.company,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.black54 : Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            job.location,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.black54 : Colors.black87,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${job.salary.toStringAsFixed(0)} VND / Giờ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.black : Colors.black,
+                        fontSize: 19,
+                      ),
+                    ),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.black54 : Colors.black87,
+                        ),
+                        children: [
+                          TextSpan(text: 'Hạn nộp hồ sơ: ', style: TextStyle(fontWeight: FontWeight.bold)), // Tiêu đề
+                          TextSpan(
+                            text: job.deadline != null
+                                ? DateFormat('dd-MM-yyyy HH:mm').format(job.deadline!) // Định dạng ngày và giờ
+                                : 'Chưa có hạn nộp', // Hiển thị nếu không có hạn nộp
+                          ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10.0),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => JobDetailScreen(job: job),
+                            ),
+                          );
+                        },
+                        child: Text('Xem Chi Tiết'),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          backgroundColor: isDarkMode ? Colors.blueGrey : Colors.blue,
+                          iconColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
+                  ],
                 ),
-              );
-              if (result == true) {
-                onRefresh(); // Gọi lại hàm tải dữ liệu
-              }
-            } else if (value == 'delete') {
-              // Xử lý xóa bài đăng
-              await _deleteJobPost(
-                  job.id, context); // Gọi hàm xóa với ID bài đăng
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem<String>(
-              value: 'edit',
-              child: Text('Chỉnh sửa'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'delete',
-              child: Text('Xóa'),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Future<void> _deleteJobPost(String id, BuildContext context) async {
-    // Hiển thị hộp thoại xác nhận trước khi xóa
-    final bool? confirmDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Xác nhận xóa'),
-        content: Text('Bạn có chắc chắn muốn xóa bài đăng này?'),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.pop(context, false), // Đóng dialog và không xóa
-            child: Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true), // Đồng ý xóa
-            child: Text('Xóa'),
-          ),
-        ],
-      ),
-    );
-
-    // Kiểm tra nếu người dùng xác nhận xóa
-    if (confirmDelete == true) {
-      try {
-        await _apiService.deleteItem(id); // Gọi hàm xóa từ ApiService
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đã xóa bài đăng')),
-        );
-        onRefresh(); // Cập nhật danh sách bài đăng
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xóa bài đăng thất bại: $e')),
-        );
-      }
-    }
   }
 }

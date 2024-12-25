@@ -111,5 +111,40 @@ class AuthService {
     }
   }
 
+  /// Kiểm tra xem người dùng đã đăng nhập hay chưa
+  Future<bool> isUserLoggedIn() async {
+    try {
+      final session = await Amplify.Auth.fetchAuthSession();
+      return session.isSignedIn; // Trả về true nếu người dùng đã đăng nhập
+    } catch (e) {
+      print('Lỗi kiểm tra trạng thái đăng nhập: $e');
+      throw Exception('Không thể kiểm tra trạng thái đăng nhập.');
+    }
+  }
+
+  /// Thay đổi mật khẩu
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    try {
+      await Amplify.Auth.updatePassword(
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      );
+      print('Thay đổi mật khẩu thành công');
+    } on AuthException catch (e) {
+      print('Thay đổi mật khẩu thất bại: $e');
+      // Kiểm tra loại lỗi và ném ra thông báo tương ứng
+      if (e.message.contains('Incorrect password')) {
+        throw Exception('Mật khẩu hiện tại không đúng.');
+      } else if (e.message.contains('WeakPasswordException')) {
+        throw Exception('Mật khẩu mới không đủ mạnh. Vui lòng chọn mật khẩu khác.');
+      } else {
+        throw Exception('Lỗi thay đổi mật khẩu: ${e.message}');
+      }
+    } catch (e) {
+      print('Đã xảy ra lỗi khi thay đổi mật khẩu: $e');
+      throw Exception('Lỗi không xác định khi thay đổi mật khẩu.');
+    }
+  }
+
 }
 

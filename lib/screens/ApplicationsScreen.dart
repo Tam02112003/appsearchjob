@@ -31,10 +31,12 @@ class ApplicationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Danh sách đơn ứng tuyển'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: isDarkMode ? Colors.blueGrey[900] : Colors.blueAccent,
       ),
       body: FutureBuilder<List<JobApplication>>(
         future: fetchApplications(jobId),
@@ -52,7 +54,7 @@ class ApplicationsScreen extends StatelessWidget {
                   : ListView.builder(
                 itemCount: applications.length,
                 itemBuilder: (context, index) {
-                  return ApplicationCard(application: applications[index]);
+                  return ApplicationCard(application: applications[index], isDarkMode: isDarkMode);
                 },
               ),
             );
@@ -67,14 +69,16 @@ class ApplicationsScreen extends StatelessWidget {
 
 class ApplicationCard extends StatelessWidget {
   final JobApplication application;
+  final bool isDarkMode;
 
-  const ApplicationCard({super.key, required this.application});
+  const ApplicationCard({super.key, required this.application, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       elevation: 3,
+      color: isDarkMode ? Colors.grey[800] : Colors.white,
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage: NetworkImage(application.image),
@@ -82,18 +86,21 @@ class ApplicationCard extends StatelessWidget {
         ),
         title: Text(
           application.name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Trình độ học vấn: ${application.education}'),
-            Text('Kinh nghiệm: ${application.experience}'),
-            Text('Số điện thoại: ${application.phone}'),
+            Text('Trình độ học vấn: ${application.education}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            Text('Kinh nghiệm: ${application.experience}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            Text('Số điện thoại: ${application.phone}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
           ],
         ),
         onTap: () {
-          // Xử lý khi nhấn vào ứng viên, ví dụ hiển thị chi tiết
           Navigator.push(
             context,
             MaterialPageRoute(
