@@ -42,12 +42,20 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
   List<JobPost> _filteredJobPosts = [];
   String username = 'Đang tải...';
   String _searchQuery = '';
-
+  bool _isAdmin = false; // Biến lưu trạng thái người dùng là admin
   @override
   void initState() {
     super.initState();
     _loadUserName();
     _loadJobPosts();
+    _checkAdminStatus(); // Kiểm tra quyền admin
+  }
+
+  Future<void> _checkAdminStatus() async {
+    final isAdmin = await _authService.isUserInGroup("admin");
+    setState(() {
+      _isAdmin = isAdmin; // Cập nhật trạng thái admin
+    });
   }
 
   Future<void> _loadUserName() async {
@@ -73,6 +81,13 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     }
   }
 
+  // Hàm kiểm tra xem người dùng có trong nhóm admin không
+  Future<bool> _isUserInAdminGroup() async {
+    final userGroups =
+        await _authService.getUserGroups(); // Giả định bạn có hàm này
+    return userGroups.contains("admin");
+  }
+
   Future<void> _refreshJobPosts() async {
     await _loadJobPosts();
   }
@@ -81,9 +96,12 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     setState(() {
       _searchQuery = query;
       _filteredJobPosts = _jobPosts.where((job) {
-        final titleMatch = job.title.toLowerCase().contains(query.toLowerCase());
-        final companyMatch = job.company.toLowerCase().contains(query.toLowerCase());
-        final locationMatch = job.location.toLowerCase().contains(query.toLowerCase());
+        final titleMatch =
+            job.title.toLowerCase().contains(query.toLowerCase());
+        final companyMatch =
+            job.company.toLowerCase().contains(query.toLowerCase());
+        final locationMatch =
+            job.location.toLowerCase().contains(query.toLowerCase());
         final salaryMatch = job.salary.toString().contains(query);
         return titleMatch || companyMatch || locationMatch || salaryMatch;
       }).toList();
@@ -111,8 +129,8 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => MyApplicationsScreen(
-                        userId: userId,
-                      )),
+                            userId: userId,
+                          )),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -130,9 +148,9 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
                     context,
                     MaterialPageRoute(
                         builder: (context) => MyJobPostsScreen(
-                          userId: userId,
-                          onRefresh: _loadJobPosts,
-                        )),
+                              userId: userId,
+                              onRefresh: _loadJobPosts,
+                            )),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -179,12 +197,18 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
             ),
             SliverList(
               delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
+                (BuildContext context, int index) {
                   final jobPost = _filteredJobPosts[index];
+                  // Chỉ hiển thị bài viết nếu không bị ẩn hoặc nếu là admin
+                  if (jobPost.isHidden && !_isAdmin) {
+                    return SizedBox.shrink(); // Không hiển thị gì
+                  }
                   return JobCard(
-                      job: jobPost,
-                      isDarkMode: isDarkMode,
-                      onRefresh: _refreshJobPosts);
+                    job: jobPost,
+                    isDarkMode: isDarkMode,
+                    onRefresh: _refreshJobPosts,
+                    isAdmin: _isAdmin,
+                  );
                 },
                 childCount: _filteredJobPosts.length,
               ),
@@ -209,7 +233,8 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 80.0; // Chiều cao tối đa của thanh tìm kiếm
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       color: isDarkMode ? Colors.grey[900] : Colors.white,
@@ -219,9 +244,11 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
           hintText: 'Tìm kiếm theo tiêu đề, công ty, địa điểm, lương...',
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30.0),
-            borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.blue),
+            borderSide:
+                BorderSide(color: isDarkMode ? Colors.white : Colors.blue),
           ),
-          prefixIcon: Icon(Icons.search, color: isDarkMode ? Colors.white : Colors.blue),
+          prefixIcon: Icon(Icons.search,
+              color: isDarkMode ? Colors.white : Colors.blue),
         ),
         style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
       ),
@@ -240,12 +267,14 @@ class JobCard extends StatelessWidget {
   final ApiService _apiService = ApiService(
       'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final VoidCallback onRefresh;
+  final bool isAdmin; // Thêm biến để kiểm tra quyền admin
 
   JobCard({
     super.key,
     required this.job,
     required this.isDarkMode,
     required this.onRefresh,
+    required this.isAdmin, // Nhận biến từ ngoài
   });
 
   @override
@@ -260,7 +289,8 @@ class JobCard extends StatelessWidget {
       ),
       child: Card(
         margin: const EdgeInsets.all(12.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
         elevation: 4,
         color: Colors.white.withAlpha(204),
         child: Padding(
@@ -303,7 +333,8 @@ class JobCard extends StatelessWidget {
                           child: Text(
                             job.location,
                             style: TextStyle(
-                              color: isDarkMode ? Colors.black54 : Colors.black87,
+                              color:
+                                  isDarkMode ? Colors.black54 : Colors.black87,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -319,16 +350,21 @@ class JobCard extends StatelessWidget {
                         fontSize: 19,
                       ),
                     ),
+
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
                           color: isDarkMode ? Colors.black54 : Colors.black87,
                         ),
                         children: [
-                          TextSpan(text: 'Hạn nộp hồ sơ: ', style: TextStyle(fontWeight: FontWeight.bold)), // Tiêu đề
+                          TextSpan(
+                              text: 'Hạn nộp hồ sơ: ',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold)), // Tiêu đề
                           TextSpan(
                             text: job.deadline != null
-                                ? DateFormat('dd-MM-yyyy HH:mm').format(job.deadline!) // Định dạng ngày và giờ
+                                ? DateFormat('dd-MM-yyyy HH:mm').format(
+                                    job.deadline!) // Định dạng ngày và giờ
                                 : 'Chưa có hạn nộp', // Hiển thị nếu không có hạn nộp
                           ),
                         ],
@@ -337,27 +373,144 @@ class JobCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 10.0),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => JobDetailScreen(job: job),
-                            ),
-                          );
-                        },
-                        child: Text('Xem Chi Tiết'),
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          backgroundColor: isDarkMode ? Colors.blueGrey : Colors.blue,
-                          iconColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.0),
-                          ),
+                    // Hiển thị trạng thái ẩn cho admin
+                    if (isAdmin)
+                      Text(
+                        job.isHidden ? 'Trạng thái: Đã ẩn' : 'Trạng thái: Hiện',
+                        style: TextStyle(
+                          color: job.isHidden ? Colors.red : Colors.green,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                    const SizedBox(height: 10.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => JobDetailScreen(job: job),
+                              ),
+                            );
+                          },
+                          child: Text('Xem Chi Tiết'),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 8.0),
+                            backgroundColor:
+                                isDarkMode ? Colors.blueGrey : Colors.blue,
+                            iconColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8.0), // Khoảng cách giữa hai nút
+                        if (isAdmin) // Chỉ hiển thị nếu là admin
+                          ElevatedButton(
+                            onPressed: () async {
+                              // Hiển thị hộp thoại xác nhận
+                              final bool? shouldHide = await showDialog<bool>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Xác Nhận'),
+                                    content: Text(
+                                        'Bạn có chắc chắn muốn ẩn bài viết này không?'),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(
+                                              false); // Trả về false khi nhấn "Không"
+                                        },
+                                        child: Text('Không'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(
+                                              true); // Trả về true khi nhấn "Có"
+                                        },
+                                        child: Text('Có'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              // Kiểm tra kết quả từ hộp thoại
+                              if (shouldHide == true) {
+                                // Xử lý ẩn bài viết
+                                await _apiService
+                                    .hideJobPost(job.id); // Hàm xử lý ẩn
+                                onRefresh(); // Cập nhật danh sách
+                              }
+                            },
+                            child: Text('Ẩn Bài Viết'),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 8.0),
+                              backgroundColor: Colors.red,
+                              iconColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30.0),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 8.0), // Khoảng cách giữa hai nút
+                        if (isAdmin) // Chỉ hiển thị nếu là admin
+                          ElevatedButton(
+                            onPressed: () async {
+                              // Hiển thị hộp thoại xác nhận
+                              final bool? shouldRestore =
+                                  await showDialog<bool>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Xác Nhận'),
+                                    content: Text(
+                                        'Bạn có chắc chắn muốn khôi phục bài viết này không?'),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(
+                                              false); // Trả về false khi nhấn "Không"
+                                        },
+                                        child: Text('Không'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(
+                                              true); // Trả về true khi nhấn "Có"
+                                        },
+                                        child: Text('Có'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              // Kiểm tra kết quả từ hộp thoại
+                              if (shouldRestore == true) {
+                                // Xử lý khôi phục bài viết
+                                await _apiService.restoreJobPost(
+                                    job.id); // Hàm xử lý khôi phục
+                                onRefresh(); // Cập nhật danh sách
+                              }
+                            },
+                            child: Text('Khôi Phục Bài Viết'),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 8.0),
+                              backgroundColor: Colors.green,
+                              iconColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30.0),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 10.0),
                   ],

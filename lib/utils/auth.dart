@@ -1,8 +1,9 @@
-import 'package:amplify_flutter/amplify_flutter.dart';
-import 'dart:convert'; // Import thư viện jsonEncode
+import 'dart:convert';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
-import 'package:amplify_api/amplify_api.dart';         // Thư viện Amplify API cần được import
+import 'package:amplify_flutter/amplify_flutter.dart';
+
 class AuthService {
+
   /// Đăng ký tài khoản
   Future<void> signUp(String email, String password) async {
     try {
@@ -21,7 +22,8 @@ class AuthService {
     } on AuthException catch (e) {
       // Kiểm tra nếu lỗi là do email đã tồn tại
       if (e.message.contains('UsernameExistsException')) {
-        throw Exception('Email đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.');
+        throw Exception(
+            'Email đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.');
       }
       // Ném lại lỗi khác nếu không phải lỗi UsernameExistsException
       throw Exception('Lỗi đăng ký: ${e.message}');
@@ -75,7 +77,6 @@ class AuthService {
       }
     }
   }
-
 
 
   /// Hàm đăng xuất
@@ -136,7 +137,8 @@ class AuthService {
       if (e.message.contains('Incorrect password')) {
         throw Exception('Mật khẩu hiện tại không đúng.');
       } else if (e.message.contains('WeakPasswordException')) {
-        throw Exception('Mật khẩu mới không đủ mạnh. Vui lòng chọn mật khẩu khác.');
+        throw Exception(
+            'Mật khẩu mới không đủ mạnh. Vui lòng chọn mật khẩu khác.');
       } else {
         throw Exception('Lỗi thay đổi mật khẩu: ${e.message}');
       }
@@ -146,5 +148,76 @@ class AuthService {
     }
   }
 
-}
+  /// Lấy danh sách nhóm của người dùng hiện tại
+  Future<List<String>> getUserGroups() async {
+    try {
+      final session = await Amplify.Auth.fetchAuthSession();
 
+      if (!session.isSignedIn) {
+        throw Exception('Người dùng chưa đăng nhập.');
+      }
+
+      // Lấy thông tin user pool tokens
+      final authSession = session as CognitoAuthSession;
+      final accessToken = authSession.userPoolTokens?.accessToken.raw;
+
+      // Kiểm tra nếu access token không null
+      if (accessToken != null) {
+        // Giải mã payload từ access token
+        final parts = accessToken.split('.');
+        if (parts.length == 3) {
+          final payload = parts[1];
+          final decodedPayload = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+          final Map<String, dynamic> userData = jsonDecode(decodedPayload);
+
+          // Lấy nhóm từ payload
+          final List<String> groups = List<String>.from(userData['cognito:groups'] ?? []);
+          return groups;
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Lỗi lấy nhóm người dùng: $e');
+      throw Exception('Không thể lấy nhóm người dùng.');
+    }
+  }
+
+  /// Kiểm tra xem người dùng hiện tại có thuộc nhóm cụ thể hay không
+  Future<bool> isUserInGroup(String groupName) async {
+    try {
+      // Lấy danh sách nhóm của người dùng
+      final userGroups = await getUserGroups();
+
+      // Kiểm tra xem nhóm có tồn tại trong danh sách hay không
+      return userGroups.contains(groupName);
+    } catch (e) {
+      print('Lỗi khi kiểm tra nhóm người dùng: $e');
+      return false;
+    }
+  }
+
+  Future<void> resetPassword(String email) async {
+    try {
+      await Amplify.Auth.resetPassword(username: email);
+      print('Mã xác nhận đã được gửi đến email: $email');
+    } catch (e) {
+      print('Lỗi khi yêu cầu đặt lại mật khẩu: $e');
+      throw e;
+    }
+  }
+
+  Future<void> confirmResetPassword(
+      String email, String confirmationCode, String newPassword) async {
+    try {
+      await Amplify.Auth.confirmResetPassword(
+        username: email,
+        newPassword: newPassword,
+        confirmationCode: confirmationCode,
+      );
+      print('Mật khẩu đã được thay đổi thành công.');
+    } catch (e) {
+      print('Lỗi khi xác nhận đặt lại mật khẩu: $e');
+      throw e;
+    }
+  }
+}

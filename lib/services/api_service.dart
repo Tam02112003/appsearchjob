@@ -104,5 +104,36 @@ class ApiService {
       throw Exception('Failed to send application');
     }
   }
+
+  Future<void> hideJobPost(String jobId) async {
+    // Gửi yêu cầu ẩn bài viết đến server
+    final response = await http.post(
+      Uri.parse('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/hide-job-post'),
+      body: jsonEncode({'jobId': jobId}),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer your_token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to hide job post');
+    }
+  }
+
+  Future<void> restoreJobPost(String jobId) async {
+    final response = await http.post(
+      Uri.parse('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/restore-job-post'),
+      body: jsonEncode({'jobId': jobId}),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer your_token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to restore job post');
+    }
+  }
 }
 

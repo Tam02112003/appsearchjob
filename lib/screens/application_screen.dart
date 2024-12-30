@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:appsearchjob/models/theme_class.dart';
 import 'package:appsearchjob/services/api_service.dart';
-import '../models/job_class.dart'; // Import API service
+import '../models/job_class.dart';
+import '../utils/auth.dart'; // Import API service
 
 class ApplicationScreen extends StatefulWidget {
   final JobPost job;
@@ -58,7 +59,22 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
       );
       return; // Dừng hàm nếu số điện thoại không hợp lệ
     }
-
+    // Lấy userId
+    String? userId;
+    try {
+      userId = await AuthService().getCurrentUserId();
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể lấy userId.')),
+        );
+        return; // Dừng hàm nếu không lấy được userId
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi khi lấy userId: $e')),
+      );
+      return; // Dừng hàm nếu có lỗi khi lấy userId
+    }
 
     JobApplication application = JobApplication(
       education: _educationController.text,
@@ -67,6 +83,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
       jobId: widget.job.id, // Lấy jobId từ widget.job.id
       name: _nameController.text,
       phone: _phoneController.text,
+      userId: userId,
     );
 
     final ApiService apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');

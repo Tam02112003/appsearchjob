@@ -97,6 +97,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
       salary: double.tryParse(salaryController.text) ?? 0.0,
       userId: currentUserId, // Thêm userId vào bài đăng
       deadline: selectedDeadline, // Sử dụng ngày và giờ đã chọn
+      isHidden: false, // Đặt mặc định isHidden là false
     );
 
     try {

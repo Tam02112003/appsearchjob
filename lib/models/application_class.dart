@@ -5,6 +5,7 @@ class JobApplication {
   final String jobId; // ID công việc
   final String name; // Tên người nộp đơn
   final String phone; // Số điện thoại
+  final String userId; // ID người nộp đơn
 
   JobApplication({
     required this.education,
@@ -13,6 +14,7 @@ class JobApplication {
     required this.jobId,
     required this.name,
     required this.phone,
+    required this.userId, // Thêm userId
   });
 
   // Phương thức chuyển đổi từ JSON sang đối tượng
@@ -24,6 +26,7 @@ class JobApplication {
       jobId: json['jobId'],
       name: json['name'],
       phone: json['phone'],
+      userId: json['userId'], // Thêm userId
     );
   }
 
@@ -36,6 +39,7 @@ class JobApplication {
       'jobId': jobId,
       'name': name,
       'phone': phone,
+      'userId': userId, // Thêm userId
     };
   }
 }

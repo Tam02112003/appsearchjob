@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:appsearchjob/utils/auth.dart';
 
+import 'forgot_pass_screen.dart';
+
 class SignInScreen extends StatefulWidget {
   @override
   _SignInScreenState createState() => _SignInScreenState();
@@ -180,6 +182,30 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 24), // Tạo khoảng cách lớn hơn
+            Align(
+              alignment: Alignment.center,
+              child: TextButton(
+                onPressed: () {
+                  // Điều hướng đến màn hình quên mật khẩu
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ForgotPasswordScreen(), // Điều hướng đến ForgotPasswordScreen
+                    ),
+                  );
+                },
+                child: Text(
+                  'Quên mật khẩu?',
+                  style: TextStyle(color: themeProvider.isDarkMode
+                      ? Colors.white
+                      : Colors.white, // Màu sắc nút đăng ký
+                    fontWeight: FontWeight.bold, // In đậm để nổi bật
+                  ),
+                ),
+              ),
             ),
           ],
         ),
