@@ -1,6 +1,7 @@
 import 'package:appsearchjob/models/application_class.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'package:appsearchjob/models/theme_class.dart';
@@ -24,7 +25,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
   final TextEditingController _phoneController = TextEditingController();
   File? _cvFile;
 
-  Future<void> _pickImage() async {
+  /*Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
     if (image != null) {
@@ -32,14 +33,40 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
         _cvFile = File(image.path);
       });
     }
+  }*/
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final String newPath = '${directory.path}/${image.name}';
+      final File newImage = await File(image.path).copy(newPath);
+
+      setState(() {
+        _cvFile = newImage;
+      });
+    }
   }
 
-  Future<void> _pickFile() async {
+ /* Future<void> _pickFile() async {
     final ImagePicker picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
     if (file != null) {
       setState(() {
         _cvFile = File(file.path);
+      });
+    }
+  }*/
+  Future<void> _pickFile() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+    if (file != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final String newPath = '${directory.path}/${file.name}';
+      final File newFile = await File(file.path).copy(newPath);
+
+      setState(() {
+        _cvFile = newFile;
       });
     }
   }

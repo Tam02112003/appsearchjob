@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../models/job_class.dart';
 import '../services/api_service.dart';
 import 'my_application_screen.dart';
+import 'my_applications_screen_td.dart';
 import 'my_job_post_screen.dart';
 
 class JobSearchApp extends StatelessWidget {
@@ -121,16 +122,17 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.work),
             onPressed: () async {
               final userId = await _authService.getCurrentUserId();
               if (userId != null) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => MyApplicationsScreen(
-                            userId: userId,
-                          )),
+                    builder: (context) => JobApplicationsPage(
+                      userId: userId,
+                    ),
+                  ),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(

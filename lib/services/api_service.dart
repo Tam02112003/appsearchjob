@@ -135,5 +135,21 @@ class ApiService {
       throw Exception('Failed to restore job post');
     }
   }
+
+  Future<List<JobApplication>> getMyJobApplications(String userId) async {
+    final response = await http.get(
+      Uri.parse('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/my-appliactions?userId=$userId'),
+      headers: {
+        'Authorization': 'Bearer your_token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body)['data'];
+      return data.map((job) => JobApplication.fromJson(job)).toList();
+    } else {
+      throw Exception('Failed to load job applications');
+    }
+  }
 }
 
