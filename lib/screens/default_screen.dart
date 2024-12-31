@@ -64,11 +64,12 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     try {
       final posts = await _apiService.fetchItems();
       setState(() {
-        _jobPosts = posts.map<JobPost>((json) => JobPost.fromJson(json)).toList();
-        _filteredJobPosts = _jobPosts; // Khởi tạo danh sách đã lọc bằng danh sách gốc
+        // Lọc bỏ các bài viết bị ẩn
+        _jobPosts = posts.map<JobPost>((json) => JobPost.fromJson(json)).where((job) => !job.isHidden).toList();
+        _filteredJobPosts = _jobPosts; // Khởi tạo danh sách đã lọc bằng danh sách không ẩn
       });
     } catch (e) {
-      print('Error loading job posts: $e');
+      print('Lỗi khi tải bài viết: $e');
     }
   }
 
@@ -143,19 +144,31 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
                 style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
               ),
             ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _filteredJobPosts.length,
-                itemBuilder: (context, index) {
-                  final jobPost = _filteredJobPosts[index];
-                  return JobCard(job: jobPost, isDarkMode: widget.isDarkMode, onRefresh: _onRefresh);
-                },
+        Expanded(
+          child: _filteredJobPosts.isEmpty
+              ? Center(
+            child: Text(
+              'Không có bài viết nào.',
+              style: TextStyle(
+                fontSize: 18,
+                color: widget.isDarkMode ? Colors.white : Colors.black,
               ),
             ),
-          ],
-        ),
+          )
+              : ListView.builder(
+            itemCount: _filteredJobPosts.length,
+            itemBuilder: (context, index) {
+              final jobPost = _filteredJobPosts[index];
+              return JobCard(
+                job: jobPost,
+                isDarkMode: widget.isDarkMode,
+                onRefresh: _onRefresh,
+              );
+            },
+          ),
       ),
-    );
+    ],
+    )));
   }
 }
 
@@ -185,7 +198,8 @@ class JobCard extends StatelessWidget {
       ),
       child: Card(
         margin: const EdgeInsets.all(12.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
         elevation: 4,
         color: Colors.white.withAlpha(204),
         child: Padding(
@@ -228,7 +242,8 @@ class JobCard extends StatelessWidget {
                           child: Text(
                             job.location,
                             style: TextStyle(
-                              color: isDarkMode ? Colors.black54 : Colors.black87,
+                              color:
+                              isDarkMode ? Colors.black54 : Colors.black87,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -244,17 +259,22 @@ class JobCard extends StatelessWidget {
                         fontSize: 19,
                       ),
                     ),
+
                     RichText(
                       text: TextSpan(
                         style: TextStyle(
                           color: isDarkMode ? Colors.black54 : Colors.black87,
                         ),
                         children: [
-                          TextSpan(text: 'Hạn nộp hồ sơ: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          TextSpan(
+                              text: 'Hạn nộp hồ sơ: ',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold)), // Tiêu đề
                           TextSpan(
                             text: job.deadline != null
-                                ? DateFormat('dd-MM-yyyy HH:mm').format(job.deadline!)
-                                : 'Chưa có hạn nộp',
+                                ? DateFormat('dd-MM-yyyy HH:mm').format(
+                                job.deadline!) // Định dạng ngày và giờ
+                                : 'Chưa có hạn nộp', // Hiển thị nếu không có hạn nộp
                           ),
                         ],
                       ),
@@ -262,27 +282,31 @@ class JobCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 10.0),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => JobDetailScreen(job: job),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => JobDetailScreen(job: job),
+                              ),
+                            );
+                          },
+                          child: Text('Xem Chi Tiết'),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 8.0),
+                            backgroundColor:
+                            isDarkMode ? Colors.blueGrey : Colors.blue,
+                            iconColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
                             ),
-                          );
-                        },
-                        child: Text('Xem Chi Tiết'),
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          backgroundColor: isDarkMode ? Colors.blueGrey : Colors.blue,
-                          iconColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.0),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                     const SizedBox(height: 10.0),
                   ],

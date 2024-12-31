@@ -183,6 +183,13 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
                       style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black54),
                     ),
                   ),
+                  if (_cvFile != null)
+                    Image.file(
+                      _cvFile!,
+                      width: 200, // Chỉnh kích thước nếu cần
+                      height: 200,
+                      fit: BoxFit.cover, // Điều chỉnh cách hiển thị hình ảnh
+                    ),
                   IconButton(
                     icon: const Icon(Icons.attach_file),
                     onPressed: _pickFile,

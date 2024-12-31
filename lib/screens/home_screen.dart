@@ -269,14 +269,14 @@ class JobCard extends StatelessWidget {
   final ApiService _apiService = ApiService(
       'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final VoidCallback onRefresh;
-  final bool isAdmin; // Thêm biến để kiểm tra quyền admin
+  final bool isAdmin;
 
   JobCard({
     super.key,
     required this.job,
     required this.isDarkMode,
     required this.onRefresh,
-    required this.isAdmin, // Nhận biến từ ngoài
+    required this.isAdmin,
   });
 
   @override
@@ -291,237 +291,184 @@ class JobCard extends StatelessWidget {
       ),
       child: Card(
         margin: const EdgeInsets.all(12.0),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
         elevation: 4,
         color: Colors.white.withAlpha(204),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: AssetImage('assets/congviec.jpg'),
-              ),
-              const SizedBox(width: 16.0),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      job.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: isDarkMode ? Colors.black : Colors.black,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8.0),
-                    Text(
-                      job.company,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.black54 : Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 12.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            job.location,
-                            style: TextStyle(
-                              color:
-                                  isDarkMode ? Colors.black54 : Colors.black87,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+          child: SingleChildScrollView( // Add this
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundImage: AssetImage('assets/congviec.jpg'),
+                ),
+                const SizedBox(width: 16.0),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        job.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: isDarkMode ? Colors.black : Colors.black,
                         ),
-                      ],
-                    ),
-                    Text(
-                      '${job.salary.toStringAsFixed(0)} VND / Giờ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.black : Colors.black,
-                        fontSize: 19,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-
-                    RichText(
-                      text: TextSpan(
+                      const SizedBox(height: 8.0),
+                      Text(
+                        job.company,
                         style: TextStyle(
                           color: isDarkMode ? Colors.black54 : Colors.black87,
                         ),
-                        children: [
-                          TextSpan(
-                              text: 'Hạn nộp hồ sơ: ',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold)), // Tiêu đề
-                          TextSpan(
-                            text: job.deadline != null
-                                ? DateFormat('dd-MM-yyyy HH:mm').format(
-                                    job.deadline!) // Định dạng ngày và giờ
-                                : 'Chưa có hạn nộp', // Hiển thị nếu không có hạn nộp
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 12.0),
+                      Text(
+                        job.location,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.black54 : Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${job.salary.toStringAsFixed(0)} VND / Giờ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.black : Colors.black,
+                          fontSize: 19,
+                        ),
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.black54 : Colors.black87,
                           ),
+                          children: [
+                            TextSpan(
+                                text: 'Hạn nộp hồ sơ: ',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(
+                              text: job.deadline != null
+                                  ? DateFormat('dd-MM-yyyy HH:mm').format(
+                                  job.deadline!)
+                                  : 'Chưa có hạn nộp',
+                            ),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 10.0),
+                      if (isAdmin)
+                        Text(
+                          job.isHidden ? 'Trạng thái: Đã ẩn' : 'Trạng thái: Hiện',
+                          style: TextStyle(
+                            color: job.isHidden ? Colors.red : Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      const SizedBox(height: 10.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      JobDetailScreen(job: job),
+                                ),
+                              );
+                            },
+                            child: Text('Xem Chi Tiết'),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 8.0),
+                              backgroundColor:
+                              isDarkMode ? Colors.blueGrey : Colors.blue,
+                              iconColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30.0),
+                              ),
+                            ),
+                          ),
+                          if (isAdmin) // Menu for admin actions
+                            PopupMenuButton<String>(
+                              iconColor: isDarkMode ? Colors.black : Colors.black,
+                              onSelected: (String value) async {
+                                if (value == 'hide') {
+                                  // Handle hiding the job post
+                                  final bool? shouldHide = await _showConfirmationDialog(
+                                      context, 'Bạn có chắc chắn muốn ẩn bài viết này không?');
+                                  if (shouldHide == true) {
+                                    await _apiService.hideJobPost(job.id);
+                                    onRefresh();
+                                  }
+                                } else if (value == 'restore') {
+                                  // Handle restoring the job post
+                                  final bool? shouldRestore = await _showConfirmationDialog(
+                                      context, 'Bạn có chắc chắn muốn khôi phục bài viết này không?');
+                                  if (shouldRestore == true) {
+                                    await _apiService.restoreJobPost(job.id);
+                                    onRefresh();
+                                  }
+                                }
+                              },
+                              itemBuilder: (BuildContext context) => [
+                                PopupMenuItem(
+                                  value: 'hide',
+                                  child: Text('Ẩn Bài Viết'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'restore',
+                                  child: Text('Khôi Phục Bài Viết'),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10.0),
-                    // Hiển thị trạng thái ẩn cho admin
-                    if (isAdmin)
-                      Text(
-                        job.isHidden ? 'Trạng thái: Đã ẩn' : 'Trạng thái: Hiện',
-                        style: TextStyle(
-                          color: job.isHidden ? Colors.red : Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    const SizedBox(height: 10.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => JobDetailScreen(job: job),
-                              ),
-                            );
-                          },
-                          child: Text('Xem Chi Tiết'),
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 8.0),
-                            backgroundColor:
-                                isDarkMode ? Colors.blueGrey : Colors.blue,
-                            iconColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.0),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8.0), // Khoảng cách giữa hai nút
-                        if (isAdmin) // Chỉ hiển thị nếu là admin
-                          ElevatedButton(
-                            onPressed: () async {
-                              // Hiển thị hộp thoại xác nhận
-                              final bool? shouldHide = await showDialog<bool>(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Xác Nhận'),
-                                    content: Text(
-                                        'Bạn có chắc chắn muốn ẩn bài viết này không?'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop(
-                                              false); // Trả về false khi nhấn "Không"
-                                        },
-                                        child: Text('Không'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop(
-                                              true); // Trả về true khi nhấn "Có"
-                                        },
-                                        child: Text('Có'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-
-                              // Kiểm tra kết quả từ hộp thoại
-                              if (shouldHide == true) {
-                                // Xử lý ẩn bài viết
-                                await _apiService
-                                    .hideJobPost(job.id); // Hàm xử lý ẩn
-                                onRefresh(); // Cập nhật danh sách
-                              }
-                            },
-                            child: Text('Ẩn Bài Viết'),
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16.0, vertical: 8.0),
-                              backgroundColor: Colors.red,
-                              iconColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30.0),
-                              ),
-                            ),
-                          ),
-                        const SizedBox(width: 8.0), // Khoảng cách giữa hai nút
-                        if (isAdmin) // Chỉ hiển thị nếu là admin
-                          ElevatedButton(
-                            onPressed: () async {
-                              // Hiển thị hộp thoại xác nhận
-                              final bool? shouldRestore =
-                                  await showDialog<bool>(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Xác Nhận'),
-                                    content: Text(
-                                        'Bạn có chắc chắn muốn khôi phục bài viết này không?'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop(
-                                              false); // Trả về false khi nhấn "Không"
-                                        },
-                                        child: Text('Không'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop(
-                                              true); // Trả về true khi nhấn "Có"
-                                        },
-                                        child: Text('Có'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-
-                              // Kiểm tra kết quả từ hộp thoại
-                              if (shouldRestore == true) {
-                                // Xử lý khôi phục bài viết
-                                await _apiService.restoreJobPost(
-                                    job.id); // Hàm xử lý khôi phục
-                                onRefresh(); // Cập nhật danh sách
-                              }
-                            },
-                            child: Text('Khôi Phục Bài Viết'),
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16.0, vertical: 8.0),
-                              backgroundColor: Colors.green,
-                              iconColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30.0),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 10.0),
-                  ],
+                      const SizedBox(height: 10.0),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Future<bool?> _showConfirmationDialog(BuildContext context, String message) {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Xác Nhận'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: Text('Không'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: Text('Có'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/application_class.dart';
 import '../services/api_service.dart';
+import 'dart:io';
 
 class JobApplicationsPage extends StatefulWidget {
   final String userId;
@@ -13,12 +15,11 @@ class JobApplicationsPage extends StatefulWidget {
 
 class _JobApplicationsPageState extends State<JobApplicationsPage> {
   late Future<List<JobApplication>> _jobApplications;
-  final ApiService apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage'); // Tạo thể hiện của ApiService
+  final ApiService apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');
 
   @override
   void initState() {
     super.initState();
-    // Gọi hàm từ ApiService
     _jobApplications = apiService.getMyJobApplications(widget.userId);
   }
 
@@ -45,7 +46,7 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
                   margin: EdgeInsets.all(8.0),
                   child: ListTile(
                     leading: application.image.isNotEmpty
-                        ? Image.network(application.image, width: 50, height: 50, fit: BoxFit.cover)
+                        ? _buildImage(application.image) // Hiển thị hình ảnh
                         : Icon(Icons.person, size: 50),
                     title: Text(application.name),
                     subtitle: Column(
@@ -67,5 +68,19 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
         },
       ),
     );
+  }
+
+  Widget _buildImage(String imagePath) {
+    if (kIsWeb) {
+      // Nếu đang chạy trên web, sử dụng Image.network
+      return Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
+    } else {
+      // Nếu không phải web, kiểm tra xem đường dẫn có phải là URL không
+      if (imagePath.startsWith('http')) {
+        return Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
+      } else {
+        return Image.file(File(imagePath), width: 50, height: 50, fit: BoxFit.cover);
+      }
+    }
   }
 }
