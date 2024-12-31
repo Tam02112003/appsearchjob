@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:photo_view/photo_view.dart';
 import '../models/application_class.dart';
 import '../services/api_service.dart';
 import 'dart:io';
@@ -15,7 +16,8 @@ class JobApplicationsPage extends StatefulWidget {
 
 class _JobApplicationsPageState extends State<JobApplicationsPage> {
   late Future<List<JobApplication>> _jobApplications;
-  final ApiService apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');
+  final ApiService apiService = ApiService(
+      'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');
 
   @override
   void initState() {
@@ -71,16 +73,40 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
   }
 
   Widget _buildImage(String imagePath) {
+    Widget imageWidget;
     if (kIsWeb) {
-      // Nếu đang chạy trên web, sử dụng Image.network
-      return Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
+      imageWidget =
+          Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
     } else {
-      // Nếu không phải web, kiểm tra xem đường dẫn có phải là URL không
       if (imagePath.startsWith('http')) {
-        return Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
+        imageWidget =
+            Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
       } else {
-        return Image.file(File(imagePath), width: 50, height: 50, fit: BoxFit.cover);
+        imageWidget = Image.file(
+            File(imagePath), width: 50, height: 50, fit: BoxFit.cover);
       }
     }
+
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) =>
+              Dialog(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  // Đóng dialog khi nhấn vào hình
+                  child: PhotoView(
+                    imageProvider: kIsWeb || imagePath.startsWith('http')
+                        ? NetworkImage(imagePath)
+                        : FileImage(File(imagePath)) as ImageProvider,
+                    backgroundDecoration: BoxDecoration(color: Colors.black),
+                  ),
+                ),
+              ),
+        );
+      },
+      child: imageWidget,
+    );
   }
 }

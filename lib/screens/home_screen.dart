@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/job_class.dart';
 import '../services/api_service.dart';
-import 'my_application_screen.dart';
 import 'my_applications_screen_td.dart';
 import 'my_job_post_screen.dart';
 
