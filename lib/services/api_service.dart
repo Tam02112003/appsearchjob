@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/application_class.dart';
+import '../models/job_class.dart';
 
 class ApiService {
   final String baseUrl;
@@ -30,7 +31,8 @@ class ApiService {
 
   // Hàm mới để lấy các đơn ứng tuyển của một người dùng
   Future<List<JobApplication>> getApplicationsByUserId(String userId) async {
-    final response = await http.get(Uri.parse('$baseUrl/applications?userId=$userId'));
+    final response =
+        await http.get(Uri.parse('$baseUrl/applications?userId=$userId'));
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body)['body'];
@@ -39,7 +41,6 @@ class ApiService {
       throw Exception('Failed to load applications');
     }
   }
-
 
   Future<void> createItem(Map<String, dynamic> item) async {
     final response = await http.post(
@@ -61,8 +62,8 @@ class ApiService {
     final itemToUpdate = Map<String, dynamic>.from(item);
 
     // Xóa khóa chính (jobId) nếu có trong item
-    itemToUpdate.remove(
-        'jobId'); // Chỉ cần chắc chắn rằng jobId không có trong item
+    itemToUpdate
+        .remove('jobId'); // Chỉ cần chắc chắn rằng jobId không có trong item
 
     final response = await http.put(
       Uri.parse('$baseUrl/$id'),
@@ -88,7 +89,8 @@ class ApiService {
 
 // Hàm gửi đơn ứng tuyển với jobId được thêm vào URL
   Future<void> sendApplication(JobApplication application) async {
-    final url = Uri.parse('$baseUrl/applications/${application.jobId}'); // Thêm jobId vào URL
+    final url = Uri.parse(
+        '$baseUrl/applications/${application.jobId}'); // Thêm jobId vào URL
     final body = jsonEncode(application.toJson());
 
     final response = await http.post(
@@ -108,7 +110,8 @@ class ApiService {
   Future<void> hideJobPost(String jobId) async {
     // Gửi yêu cầu ẩn bài viết đến server
     final response = await http.post(
-      Uri.parse('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/hide-job-post'),
+      Uri.parse(
+          'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/hide-job-post'),
       body: jsonEncode({'jobId': jobId}),
       headers: {
         'Content-Type': 'application/json',
@@ -123,7 +126,8 @@ class ApiService {
 
   Future<void> restoreJobPost(String jobId) async {
     final response = await http.post(
-      Uri.parse('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/restore-job-post'),
+      Uri.parse(
+          'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/restore-job-post'),
       body: jsonEncode({'jobId': jobId}),
       headers: {
         'Content-Type': 'application/json',
@@ -138,7 +142,8 @@ class ApiService {
 
   Future<List<JobApplication>> getMyJobApplications(String userId) async {
     final response = await http.get(
-      Uri.parse('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/my-appliactions?userId=$userId'),
+      Uri.parse(
+          'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/my-appliactions?userId=$userId'),
       headers: {
         'Authorization': 'Bearer your_token',
       },
@@ -151,5 +156,62 @@ class ApiService {
       throw Exception('Failed to load job applications');
     }
   }
-}
 
+  Future<void> updateApplicationStatus(
+      String applicationId, String status) async {
+    const String url = 'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/applications';
+    final Map<String, dynamic> body = {
+      'applicationId': applicationId, // Thêm applicationId vào body nếu cần
+      'response': status,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer your_token',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode != 200) {
+        // In ra mã trạng thái và nội dung phản hồi khi có lỗi
+        print('Error: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to update application status');
+      }
+    } catch (e) {
+      // In ra lỗi nếu có ngoại lệ
+      print('Exception occurred: $e');
+      throw Exception('Failed to update application status');
+    }
+  }
+
+  Future<JobPost?> getJobPostById(String jobId) async {
+    final response = await http.get(
+      Uri.parse('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job/$jobId'),
+      headers: {
+        'Authorization': 'Bearer your_token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return JobPost(
+        id: data['jobId'],
+        title: data['title'],
+        description: data['description'],
+        company: data['company'],
+        location: data['location'],
+        salary: data['salary']?.toDouble() ?? 0.0,
+        userId: data['userId'],
+        deadline: data['deadline'] != null ? DateTime.parse(data['deadline']) : null,
+        isHidden: data['isHidden'] ?? false,
+      );
+    } else {
+      // In thêm thông tin lỗi trả về từ API
+      print('API response: ${response.statusCode}, body: ${response.body}');
+      throw Exception('Failed to load job post');
+    }
+  }
+}

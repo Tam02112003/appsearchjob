@@ -72,7 +72,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
   }
 
   Future<void> _submitApplication() async {
-    if (_nameController.text.isEmpty || _phoneController.text.isEmpty || _cvFile == null) {
+    if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Vui lòng điền đầy đủ thông tin ứng tuyển!')),
       );
@@ -104,13 +104,15 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
     }
 
     JobApplication application = JobApplication(
+      id:'',
       education: _educationController.text,
       experience: _experienceController.text,
-      image: _cvFile!.path, // Đường dẫn đến file hình ảnh
+      image: _cvFile?.path, // Đường dẫn đến file hình ảnh
       jobId: widget.job.id, // Lấy jobId từ widget.job.id
       name: _nameController.text,
       phone: _phoneController.text,
       userId: userId,
+      status:'Đang chờ duyệt'
     );
 
     final ApiService apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');

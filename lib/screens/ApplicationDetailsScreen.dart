@@ -2,6 +2,8 @@ import 'package:appsearchjob/models/application_class.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../services/api_service.dart';
+
 class ApplicationDetailsScreen extends StatelessWidget {
   final JobApplication application;
 
@@ -17,19 +19,21 @@ class ApplicationDetailsScreen extends StatelessWidget {
         backgroundColor: isDarkMode ? Colors.blueGrey[900] : Colors.blueAccent,
       ),
       body: Container(
-        height: MediaQuery.of(context).size.height, // Đảm bảo container chiếm toàn bộ chiều cao
+        height: MediaQuery.of(context)
+            .size
+            .height, // Đảm bảo container chiếm toàn bộ chiều cao
         decoration: BoxDecoration(
           gradient: isDarkMode
               ? LinearGradient(
-            colors: [Colors.black87, Colors.grey[850]!],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )
+                  colors: [Colors.black87, Colors.grey[850]!],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
               : LinearGradient(
-            colors: [Colors.white, Colors.blue[50]!],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+                  colors: [Colors.white, Colors.blue[50]!],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
         ),
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -38,12 +42,12 @@ class ApplicationDetailsScreen extends StatelessWidget {
             children: [
               Center(
                 child: CircleAvatar(
-                  backgroundImage: NetworkImage(application.image),
+                  backgroundImage: NetworkImage(application.image ?? ''),
                   radius: 60,
                   backgroundColor: Colors.grey[300],
                   child: ClipOval(
                     child: Image.network(
-                      application.image,
+                      application.image ?? '',
                       fit: BoxFit.cover,
                       width: 120,
                       height: 120,
@@ -66,16 +70,20 @@ class ApplicationDetailsScreen extends StatelessWidget {
               const SizedBox(height: 10),
               _buildInfoCard('Số điện thoại:', application.phone, isDarkMode),
               const SizedBox(height: 10),
-              _buildInfoCard('Trình độ học vấn:', application.education, isDarkMode),
+              _buildInfoCard(
+                  'Trình độ học vấn:', application.education, isDarkMode),
               const SizedBox(height: 10),
-              _buildInfoCard('Kinh nghiệm:', application.experience, isDarkMode),
+              _buildInfoCard(
+                  'Kinh nghiệm:', application.experience, isDarkMode),
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton(
                   onPressed: () => _showResponseDialog(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDarkMode ? Colors.blueGrey[700] : Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
+                    backgroundColor:
+                        isDarkMode ? Colors.blueGrey[700] : Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15.0, horizontal: 30.0),
                     textStyle: const TextStyle(fontSize: 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -136,13 +144,13 @@ class ApplicationDetailsScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () {
-                _handleResponse(context, 'accepted');
+                _handleResponse(context, application.id, 'Chấp nhận');
               },
               child: const Text('Chấp nhận'),
             ),
             TextButton(
               onPressed: () {
-                _handleResponse(context, 'rejected');
+                _handleResponse(context, application.id, 'Từ chối');
               },
               child: const Text('Từ chối'),
             ),
@@ -154,15 +162,44 @@ class ApplicationDetailsScreen extends StatelessWidget {
             ),
           ],
         );
+
+
       },
     );
   }
 
-  void _handleResponse(BuildContext context, String response) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Bạn đã ${response == 'accepted' ? 'chấp nhận' : 'từ chối'} ứng viên ${application.name}')),
+  void _handleResponse(BuildContext context, String applicationId, String status) async {
+    final apiService = ApiService(
+        'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage');
+
+    // Hiển thị loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
     );
 
-    Navigator.of(context).pop(); // Đóng dialog sau khi phản hồi
+    try {
+      // Gọi hàm updateApplicationStatus
+      await apiService.updateApplicationStatus(applicationId, status);
+
+      // Đóng loading dialog
+      Navigator.of(context).pop();
+
+      // Hiển thị thông báo thành công
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật trạng thái thành công: $status')),
+      );
+    } catch (error) {
+      // Đóng loading dialog
+      Navigator.of(context).pop();
+
+      // Hiển thị thông báo lỗi
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: $error')),
+      );
+    }
   }
 }

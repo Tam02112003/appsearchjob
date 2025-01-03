@@ -81,7 +81,10 @@ class ApplicationCard extends StatelessWidget {
       color: isDarkMode ? Colors.grey[800] : Colors.white,
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: NetworkImage(application.image),
+          //backgroundImage: NetworkImage(application.image ?? 'banner.png'),
+          backgroundImage: application.image != null && application.image!.isNotEmpty
+              ? NetworkImage(application.image!)
+              : const AssetImage('banner.png') as ImageProvider, // Sử dụng hình ảnh mặc định
           radius: 30,
         ),
         title: Text(

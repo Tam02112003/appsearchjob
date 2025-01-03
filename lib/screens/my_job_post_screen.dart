@@ -74,25 +74,25 @@ class _MyJobPostsScreenState extends State<MyJobPostsScreen> {
               child: jobPosts.isEmpty
                   ? const Center(child: Text('Chưa có bài đăng tuyển nào.'))
                   : ListView.builder(
-                itemCount: jobPosts.length,
-                itemBuilder: (context, index) {
-                  return JobPostCard(
-                    jobPost: jobPosts[index],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ApplicationsScreen(
-                            jobId: jobPosts[index].id,
-                          ),
-                        ),
-                      );
-                    },
-                    onRefresh: _refreshJobPosts, // Gọi hàm refresh
-                    isDarkMode: false, // Điều chỉnh nếu cần
-                  );
-                },
-              ),
+                      itemCount: jobPosts.length,
+                      itemBuilder: (context, index) {
+                        return JobPostCard(
+                          jobPost: jobPosts[index],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ApplicationsScreen(
+                                  jobId: jobPosts[index].id,
+                                ),
+                              ),
+                            );
+                          },
+                          onRefresh: _refreshJobPosts, // Gọi hàm refresh
+                          isDarkMode: false, // Điều chỉnh nếu cần
+                        );
+                      },
+                    ),
             );
           } else {
             return const Center(child: Text('Không có dữ liệu.'));
@@ -107,7 +107,8 @@ class JobPostCard extends StatelessWidget {
   final JobPost jobPost;
   final VoidCallback onTap;
   final bool isDarkMode;
-  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
+  final ApiService _apiService = ApiService(
+      'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final VoidCallback onRefresh;
 
   JobPostCard({
@@ -125,74 +126,87 @@ class JobPostCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       elevation: 3,
-      child:Container(
-    decoration: BoxDecoration(
-    gradient: LinearGradient(
-      colors: [Colors.blue, Colors.purple],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
-    ),
-      child:ListTile(
-        contentPadding: const EdgeInsets.all(16.0),
-        title: Text(
-          jobPost.title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue, Colors.purple],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Công ty: ${jobPost.company}'),
-            Text('Địa điểm: ${jobPost.location}'),
-            Text('Lương: \ ${jobPost.salary.toStringAsFixed(0)} VND / giờ'),
-            RichText(
-              text: TextSpan(
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(16.0),
+          title: Text(
+            jobPost.title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Công ty: ${jobPost.company}'),
+              Text('Địa điểm: ${jobPost.location}'),
+              Text('Lương: \ ${jobPost.salary.toStringAsFixed(0)} VND / giờ'),
+              Text(
+                '${jobPost.isHidden ? 'Trạng thái: Đã ẩn' : 'Trạng thái: Hiện'}',
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white54 : Colors.black87,
+                  color: jobPost.isHidden ? Colors.red : Colors.green,
+                  fontWeight: FontWeight.bold,
                 ),
-                children: [
-                  TextSpan(text: 'Hạn nộp hồ sơ: ', style: TextStyle(fontWeight: FontWeight.bold)), // Tiêu đề
-                  TextSpan(
-                    text: jobPost.deadline != null
-                        ? DateFormat('dd-MM-yyyy HH:mm').format(jobPost.deadline!) // Định dạng ngày và giờ
-                        : 'Chưa có hạn nộp', // Hiển thị nếu không có hạn nộp
-                  ),
-                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: isDarkMode ? Colors.white : Colors.black),
-          onSelected: (value) async {
-            if (value == 'edit') {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EditJobScreen(jobPost: jobPost)),
-              );
-              if (result == true) {
-                onRefresh(); // Tải lại danh sách sau khi chỉnh sửa
+              RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white54 : Colors.black87,
+                  ),
+                  children: [
+                    TextSpan(
+                        text: 'Hạn nộp hồ sơ: ',
+                        style:
+                            TextStyle(fontWeight: FontWeight.bold)), // Tiêu đề
+                    TextSpan(
+                      text: jobPost.deadline != null
+                          ? DateFormat('dd-MM-yyyy HH:mm').format(
+                              jobPost.deadline!) // Định dạng ngày và giờ
+                          : 'Chưa có hạn nộp', // Hiển thị nếu không có hạn nộp
+                    ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          trailing: PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert,
+                color: isDarkMode ? Colors.white : Colors.black),
+            onSelected: (value) async {
+              if (value == 'edit') {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => EditJobScreen(jobPost: jobPost)),
+                );
+                if (result == true) {
+                  onRefresh(); // Tải lại danh sách sau khi chỉnh sửa
+                }
+              } else if (value == 'delete') {
+                await _deleteJobPost(jobPost.id, context);
               }
-            } else if (value == 'delete') {
-              await _deleteJobPost(jobPost.id, context);
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem<String>(
-              value: 'edit',
-              child: Text('Chỉnh sửa'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'delete',
-              child: Text('Xóa'),
-            ),
-          ],
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'edit',
+                child: Text('Chỉnh sửa'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Text('Xóa'),
+              ),
+            ],
+          ),
+          onTap: onTap,
         ),
-        onTap: onTap,
       ),
-    ),
     );
   }
 
@@ -218,10 +232,12 @@ class JobPostCard extends StatelessWidget {
     if (confirmDelete == true) {
       try {
         await _apiService.deleteItem(id);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Đã xóa bài đăng')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Đã xóa bài đăng')));
         onRefresh(); // Tải lại danh sách bài đăng
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Xóa bài đăng thất bại: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Xóa bài đăng thất bại: $e')));
       }
     }
   }
