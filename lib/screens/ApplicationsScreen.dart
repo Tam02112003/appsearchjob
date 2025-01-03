@@ -1,14 +1,30 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:photo_view/photo_view.dart';
 import 'dart:convert';
 
 import '../models/application_class.dart';
 import 'ApplicationDetailsScreen.dart';
 
-class ApplicationsScreen extends StatelessWidget {
+class ApplicationsScreen extends StatefulWidget {
   final String jobId;
 
-  ApplicationsScreen({super.key, required this.jobId});
+  const ApplicationsScreen({super.key, required this.jobId});
+
+  @override
+  _ApplicationsScreenState createState() => _ApplicationsScreenState();
+}
+
+class _ApplicationsScreenState extends State<ApplicationsScreen> {
+  late Future<List<JobApplication>> futureApplications;
+
+  @override
+  void initState() {
+    super.initState();
+    futureApplications = fetchApplications(widget.jobId);
+  }
 
   Future<List<JobApplication>> fetchApplications(String jobId) async {
     final url = Uri.parse(
@@ -37,9 +53,19 @@ class ApplicationsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Danh sách đơn ứng tuyển'),
         backgroundColor: isDarkMode ? Colors.blueGrey[900] : Colors.blueAccent,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                futureApplications = fetchApplications(widget.jobId);
+              });
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<JobApplication>>(
-        future: fetchApplications(jobId),
+        future: futureApplications,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -51,10 +77,19 @@ class ApplicationsScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: applications.isEmpty
                   ? const Center(child: Text('Chưa có đơn ứng tuyển nào.'))
-                  : ListView.builder(
+                  : ListView.separated(
                 itemCount: applications.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
-                  return ApplicationCard(application: applications[index], isDarkMode: isDarkMode);
+                  return ApplicationCard(
+                    application: applications[index],
+                    isDarkMode: isDarkMode,
+                    onUpdate: () {
+                      setState(() {
+                        futureApplications = fetchApplications(widget.jobId);
+                      });
+                    },
+                  );
                 },
               ),
             );
@@ -70,8 +105,14 @@ class ApplicationsScreen extends StatelessWidget {
 class ApplicationCard extends StatelessWidget {
   final JobApplication application;
   final bool isDarkMode;
+  final VoidCallback onUpdate; // Hàm callback để cập nhật danh sách
 
-  const ApplicationCard({super.key, required this.application, required this.isDarkMode});
+  const ApplicationCard({
+    super.key,
+    required this.application,
+    required this.isDarkMode,
+    required this.onUpdate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -80,15 +121,9 @@ class ApplicationCard extends StatelessWidget {
       elevation: 3,
       color: isDarkMode ? Colors.grey[800] : Colors.white,
       child: ListTile(
-        leading: CircleAvatar(
-          //backgroundImage: NetworkImage(application.image ?? 'banner.png'),
-          backgroundImage: application.image != null && application.image!.isNotEmpty
-              ? NetworkImage(application.image!)
-              : const AssetImage('banner.png') as ImageProvider, // Sử dụng hình ảnh mặc định
-          radius: 30,
-        ),
+        leading: _buildImage(context, application.image),
         title: Text(
-          application.name,
+          application.name ?? 'Không có tên',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
@@ -98,19 +133,77 @@ class ApplicationCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Trình độ học vấn: ${application.education}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
-            Text('Kinh nghiệm: ${application.experience}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
-            Text('Số điện thoại: ${application.phone}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            Text('Trình độ học vấn: ${application.education ?? 'Không có thông tin'}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            Text('Kinh nghiệm: ${application.experience ?? 'Không có thông tin'}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            Text('Số điện thoại: ${application.phone ?? 'Không có thông tin'}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
+            Text('Trạng thái: ${application.status ?? 'Không có thông tin'}', style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black)),
           ],
         ),
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ApplicationDetailsScreen(application: application),
             ),
           );
+
+          if (result == true) {
+            onUpdate(); // Gọi hàm callback để cập nhật danh sách
+          }
         },
+      ),
+    );
+  }
+
+  Widget _buildImage(BuildContext context, String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return Image.asset('assets/logo.png', width: 100);
+    }
+
+    Widget imageWidget;
+
+    if (kIsWeb || imagePath.startsWith('http')) {
+      imageWidget = Image.network(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.error, size: 100);
+        },
+      );
+    } else {
+      imageWidget = Image.file(
+        File(imagePath),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.error, size: 100);
+        },
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => Dialog(
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: PhotoView(
+                imageProvider: kIsWeb || imagePath.startsWith('http')
+                    ? NetworkImage(imagePath)
+                    : FileImage(File(imagePath)),
+                backgroundDecoration: const BoxDecoration(color: Colors.black),
+              ),
+            ),
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 120,
+          height: 120,
+          child: imageWidget,
+        ),
       ),
     );
   }

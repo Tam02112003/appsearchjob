@@ -22,13 +22,13 @@ class JobSearchApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[100],
       ),
       debugShowCheckedModeBanner: false,
-      home: JobSearchScreen(),
+      home: const JobSearchScreen(),
     );
   }
 }
 
 class JobSearchScreen extends StatefulWidget {
-  JobSearchScreen({super.key});
+  const JobSearchScreen({super.key});
 
   @override
   _JobSearchScreenState createState() => _JobSearchScreenState();
@@ -36,25 +36,24 @@ class JobSearchScreen extends StatefulWidget {
 
 class _JobSearchScreenState extends State<JobSearchScreen> {
   final AuthService _authService = AuthService();
-  final ApiService _apiService = ApiService(
-      'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
+  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   List<JobPost> _jobPosts = [];
   List<JobPost> _filteredJobPosts = [];
   String username = 'Đang tải...';
-  String _searchQuery = '';
-  bool _isAdmin = false; // Biến lưu trạng thái người dùng là admin
+  bool _isAdmin = false;
+
   @override
   void initState() {
     super.initState();
     _loadUserName();
     _loadJobPosts();
-    _checkAdminStatus(); // Kiểm tra quyền admin
+    _checkAdminStatus();
   }
 
   Future<void> _checkAdminStatus() async {
     final isAdmin = await _authService.isUserInGroup("admin");
     setState(() {
-      _isAdmin = isAdmin; // Cập nhật trạng thái admin
+      _isAdmin = isAdmin;
     });
   }
 
@@ -69,23 +68,13 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
     try {
       final posts = await _apiService.fetchItems();
       setState(() {
-        _jobPosts =
-            posts.map<JobPost>((json) => JobPost.fromJson(json)).toList();
-        _filteredJobPosts = _jobPosts; // Khởi tạo danh sách đã lọc
+        _jobPosts = posts.map<JobPost>((json) => JobPost.fromJson(json)).toList();
+        _filteredJobPosts = _jobPosts;
       });
     } catch (e) {
       print('Error loading job posts: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading job posts: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading job posts: $e')));
     }
-  }
-
-  // Hàm kiểm tra xem người dùng có trong nhóm admin không
-  Future<bool> _isUserInAdminGroup() async {
-    final userGroups =
-        await _authService.getUserGroups(); // Giả định bạn có hàm này
-    return userGroups.contains("admin");
   }
 
   Future<void> _refreshJobPosts() async {
@@ -94,18 +83,36 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
 
   void _filterJobPosts(String query) {
     setState(() {
-      _searchQuery = query;
+
       _filteredJobPosts = _jobPosts.where((job) {
-        final titleMatch =
-            job.title.toLowerCase().contains(query.toLowerCase());
-        final companyMatch =
-            job.company.toLowerCase().contains(query.toLowerCase());
-        final locationMatch =
-            job.location.toLowerCase().contains(query.toLowerCase());
-        final salaryMatch = job.salary.toString().contains(query);
-        return titleMatch || companyMatch || locationMatch || salaryMatch;
+        final titleMatch = job.title.toLowerCase().contains(query.toLowerCase());
+        final companyMatch = job.company.toLowerCase().contains(query.toLowerCase());
+        final locationMatch = job.location.toLowerCase().contains(query.toLowerCase());
+        return titleMatch || companyMatch || locationMatch ;
       }).toList();
     });
+  }
+
+  void _openFilterScreen() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return FilterScreen(
+          onApplyFilters: (String title, String location, double minSalary, double maxSalary, DateTime? deadline) {
+            setState(() {
+              _filteredJobPosts = _jobPosts.where((job) {
+
+                final salaryMatch = job.salary >= minSalary && job.salary <= maxSalary;
+                final deadlineMatch = deadline == null || (job.deadline != null && job.deadline!.isBefore(deadline));
+
+                return  salaryMatch && deadlineMatch;
+              }).toList();
+            });
+            Navigator.pop(context); // Đóng BottomSheet
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -115,8 +122,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Tìm kiếm việc làm',
-            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
+        title: Text('Tìm kiếm việc làm', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
         backgroundColor: isDarkMode ? Colors.grey[900] : Colors.cyanAccent,
         automaticallyImplyLeading: false,
         actions: [
@@ -125,47 +131,27 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
             onPressed: () async {
               final userId = await _authService.getCurrentUserId();
               if (userId != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => JobApplicationsPage(
-                      userId: userId,
-                    ),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => JobApplicationsPage(userId: userId)));
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Không thể lấy userId.')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể lấy userId.')));
               }
             },
           ),
           IconButton(
-              icon: const Icon(Icons.list),
-              onPressed: () async {
-                final userId = await _authService.getCurrentUserId();
-                if (userId != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => MyJobPostsScreen(
-                              userId: userId,
-                              onRefresh: _loadJobPosts,
-                            )),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Không thể lấy userId.')),
-                  );
-                }
-              }),
+            icon: const Icon(Icons.list),
+            onPressed: () async {
+              final userId = await _authService.getCurrentUserId();
+              if (userId != null) {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => MyJobPostsScreen(userId: userId, onRefresh: _loadJobPosts)));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể lấy userId.')));
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const JobPostScreen()),
-              );
+              final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const JobPostScreen()));
               if (result == true) {
                 _refreshJobPosts();
               }
@@ -183,33 +169,25 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
               pinned: true,
               automaticallyImplyLeading: false,
               flexibleSpace: FlexibleSpaceBar(
-                background: Image.asset(
-                  'assets/banner.png',
-                  fit: BoxFit.cover,
-                ),
+                background: Image.asset('assets/banner.png', fit: BoxFit.cover),
               ),
             ),
             SliverPersistentHeader(
               pinned: true,
               delegate: _SearchBarDelegate(
                 isDarkMode: isDarkMode,
-                onSearch: _filterJobPosts, // Gọi hàm lọc khi tìm kiếm
+                onSearch: _filterJobPosts,
+                onFilter: _openFilterScreen, // Gọi hàm mở màn hình lọc
               ),
             ),
             SliverList(
               delegate: SliverChildBuilderDelegate(
-                (BuildContext context, int index) {
+                    (BuildContext context, int index) {
                   final jobPost = _filteredJobPosts[index];
-                  // Chỉ hiển thị bài viết nếu không bị ẩn hoặc nếu là admin
                   if (jobPost.isHidden && !_isAdmin) {
-                    return SizedBox.shrink(); // Không hiển thị gì
+                    return const SizedBox.shrink();
                   }
-                  return JobCard(
-                    job: jobPost,
-                    isDarkMode: isDarkMode,
-                    onRefresh: _refreshJobPosts,
-                    isAdmin: _isAdmin,
-                  );
+                  return JobCard(job: jobPost, isDarkMode: isDarkMode, onRefresh: _refreshJobPosts, isAdmin: _isAdmin);
                 },
                 childCount: _filteredJobPosts.length,
               ),
@@ -224,64 +202,173 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
 class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
   final bool isDarkMode;
   final Function(String) onSearch;
+  final VoidCallback onFilter;
 
-  _SearchBarDelegate({required this.isDarkMode, required this.onSearch});
-
-  @override
-  double get minExtent => 80.0; // Chiều cao tối thiểu của thanh tìm kiếm
+  _SearchBarDelegate({required this.isDarkMode, required this.onSearch, required this.onFilter});
 
   @override
-  double get maxExtent => 80.0; // Chiều cao tối đa của thanh tìm kiếm
+  double get minExtent => 80.0;
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+  double get maxExtent => 80.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       color: isDarkMode ? Colors.grey[900] : Colors.white,
-      child: TextField(
-        onChanged: onSearch, // Gọi hàm lọc khi người dùng nhập
-        decoration: InputDecoration(
-          hintText: 'Tìm kiếm theo tiêu đề, công ty, địa điểm, lương...',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30.0),
-            borderSide:
-                BorderSide(color: isDarkMode ? Colors.white : Colors.blue),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              onChanged: onSearch,
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm theo tiêu đề, công ty, địa điểm',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                  borderSide: BorderSide(color: isDarkMode ? Colors.white : Colors.blue),
+                ),
+                prefixIcon: Icon(Icons.search, color: isDarkMode ? Colors.white : Colors.blue),
+              ),
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            ),
           ),
-          prefixIcon: Icon(Icons.search,
-              color: isDarkMode ? Colors.white : Colors.blue),
-        ),
-        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: onFilter, // Gọi hàm mở màn hình lọc
+          ),
+        ],
       ),
     );
   }
 
   @override
   bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) {
-    return true; // Xây dựng lại nếu có thay đổi
+    return true;
+  }
+}
+
+class FilterScreen extends StatefulWidget {
+  final Function(String, String, double, double, DateTime?) onApplyFilters;
+
+  const FilterScreen({required this.onApplyFilters});
+
+  @override
+  _FilterScreenState createState() => _FilterScreenState();
+
+}
+
+class _FilterScreenState extends State<FilterScreen> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  double _minSalary = 0;
+  double _maxSalary = 100000; // Giả sử 100,000 là mức lương tối đa
+  DateTime? _selectedDeadline;
+
+
+  Future<void> _selectDeadline(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDeadline ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _selectedDeadline) {
+      setState(() {
+        _selectedDeadline = picked;
+      });
+    }
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _minSalary = 0;
+      _maxSalary = 100000; // Đặt lại mức lương tối đa
+      _selectedDeadline = null; // Đặt lại hạn nộp hồ sơ
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Lọc Công Việc',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Mức Lương: ${_minSalary.toStringAsFixed(0)} VND - ${_maxSalary.toStringAsFixed(0)} VND',
+            style: const TextStyle(fontSize: 16),
+          ),
+          RangeSlider(
+            values: RangeValues(_minSalary, _maxSalary),
+            min: 0,
+            max: 100000,
+            divisions: 100,
+            labels: RangeLabels(
+              _minSalary.toStringAsFixed(0),
+              _maxSalary.toStringAsFixed(0),
+            ),
+            onChanged: (RangeValues values) {
+              setState(() {
+                _minSalary = values.start;
+                _maxSalary = values.end;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          TextButton(
+            onPressed: () => _selectDeadline(context),
+            child: Text(
+              _selectedDeadline == null
+                  ? 'Chọn Hạn Nộp Hồ Sơ'
+                  : 'Hạn Nộp Hồ Sơ: ${DateFormat('dd-MM-yyyy').format(_selectedDeadline!)}',
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              widget.onApplyFilters(
+                _titleController.text,
+                _locationController.text,
+                _minSalary,
+                _maxSalary,
+                _selectedDeadline,
+              );
+            },
+            child: const Text('Áp Dụng Bộ Lọc'),
+          ),
+          TextButton(
+            onPressed: _resetFilters,
+            child: const Text('Đặt Lại Bộ Lọc', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 class JobCard extends StatelessWidget {
   final JobPost job;
   final bool isDarkMode;
-  final ApiService _apiService = ApiService(
-      'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
+  final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final VoidCallback onRefresh;
   final bool isAdmin;
 
-  JobCard({
-    super.key,
-    required this.job,
-    required this.isDarkMode,
-    required this.onRefresh,
-    required this.isAdmin,
-  });
+  JobCard({super.key, required this.job, required this.isDarkMode, required this.onRefresh, required this.isAdmin});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blue, Colors.purple],
           begin: Alignment.topLeft,
@@ -295,10 +382,10 @@ class JobCard extends StatelessWidget {
         color: Colors.white.withAlpha(204),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView( // Add this
+          child: SingleChildScrollView(
             child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 40,
                   backgroundImage: AssetImage('assets/congviec.jpg'),
                 ),
@@ -349,15 +436,8 @@ class JobCard extends StatelessWidget {
                             color: isDarkMode ? Colors.black54 : Colors.black87,
                           ),
                           children: [
-                            TextSpan(
-                                text: 'Hạn nộp hồ sơ: ',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(
-                              text: job.deadline != null
-                                  ? DateFormat('dd-MM-yyyy HH:mm').format(
-                                  job.deadline!)
-                                  : 'Chưa có hạn nộp',
-                            ),
+                            const TextSpan(text: 'Hạn nộp hồ sơ: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: job.deadline != null ? DateFormat('dd-MM-yyyy HH:mm').format(job.deadline!) : 'Chưa có hạn nộp'),
                           ],
                         ),
                         maxLines: 1,
@@ -378,42 +458,30 @@ class JobCard extends StatelessWidget {
                         children: [
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      JobDetailScreen(job: job),
-                                ),
-                              );
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => JobDetailScreen(job: job)));
                             },
-                            child: Text('Xem Chi Tiết'),
+                            child: const Text('Xem Chi Tiết'),
                             style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16.0, vertical: 8.0),
-                              backgroundColor:
-                              isDarkMode ? Colors.blueGrey : Colors.blue,
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                              backgroundColor: isDarkMode ? Colors.blueGrey : Colors.blue,
                               iconColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30.0),
                               ),
                             ),
                           ),
-                          if (isAdmin) // Menu for admin actions
+                          if (isAdmin)
                             PopupMenuButton<String>(
                               iconColor: isDarkMode ? Colors.black : Colors.black,
                               onSelected: (String value) async {
                                 if (value == 'hide') {
-                                  // Handle hiding the job post
-                                  final bool? shouldHide = await _showConfirmationDialog(
-                                      context, 'Bạn có chắc chắn muốn ẩn bài viết này không?');
+                                  final bool? shouldHide = await _showConfirmationDialog(context, 'Bạn có chắc chắn muốn ẩn bài viết này không?');
                                   if (shouldHide == true) {
                                     await _apiService.hideJobPost(job.id);
                                     onRefresh();
                                   }
                                 } else if (value == 'restore') {
-                                  // Handle restoring the job post
-                                  final bool? shouldRestore = await _showConfirmationDialog(
-                                      context, 'Bạn có chắc chắn muốn khôi phục bài viết này không?');
+                                  final bool? shouldRestore = await _showConfirmationDialog(context, 'Bạn có chắc chắn muốn khôi phục bài viết này không?');
                                   if (shouldRestore == true) {
                                     await _apiService.restoreJobPost(job.id);
                                     onRefresh();
@@ -421,14 +489,8 @@ class JobCard extends StatelessWidget {
                                 }
                               },
                               itemBuilder: (BuildContext context) => [
-                                PopupMenuItem(
-                                  value: 'hide',
-                                  child: Text('Ẩn Bài Viết'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'restore',
-                                  child: Text('Khôi Phục Bài Viết'),
-                                ),
+                                const PopupMenuItem(value: 'hide', child: Text('Ẩn Bài Viết')),
+                                const PopupMenuItem(value: 'restore', child: Text('Khôi Phục Bài Viết')),
                               ],
                             ),
                         ],
@@ -450,20 +512,20 @@ class JobCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Xác Nhận'),
+          title: const Text('Xác Nhận'),
           content: Text(message),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
-              child: Text('Không'),
+              child: const Text('Không'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
-              child: Text('Có'),
+              child: const Text('Có'),
             ),
           ],
         );

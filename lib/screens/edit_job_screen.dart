@@ -6,7 +6,7 @@ import '../services/api_service.dart';
 class EditJobScreen extends StatefulWidget {
   final JobPost jobPost;
 
-  EditJobScreen({required this.jobPost});
+  const EditJobScreen({required this.jobPost});
 
   @override
   _EditJobScreenState createState() => _EditJobScreenState();
@@ -74,7 +74,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
         companyController.text.isEmpty || locationController.text.isEmpty ||
         salaryController.text.isEmpty || deadlineController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng điền đầy đủ thông tin.')),
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin.')),
       );
       return; // Dừng lại nếu không hợp lệ
     }
@@ -83,7 +83,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
     double? salary = double.tryParse(salaryController.text);
     if (salary == null || salary < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập lương hợp lệ')),
+        const SnackBar(content: Text('Vui lòng nhập lương hợp lệ')),
       );
       return; // Dừng hàm nếu lương không hợp lệ
     }
@@ -111,7 +111,7 @@ class _EditJobScreenState extends State<EditJobScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chỉnh Sửa Bài Đăng'),
+        title: const Text('Chỉnh Sửa Bài Đăng'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -119,23 +119,23 @@ class _EditJobScreenState extends State<EditJobScreen> {
           children: [
             TextField(
               controller: titleController,
-              decoration: InputDecoration(labelText: 'Tiêu đề'),
+              decoration: const InputDecoration(labelText: 'Tiêu đề'),
             ),
             TextField(
               controller: descriptionController,
-              decoration: InputDecoration(labelText: 'Mô tả'),
+              decoration: const InputDecoration(labelText: 'Mô tả'),
             ),
             TextField(
               controller: companyController,
-              decoration: InputDecoration(labelText: 'Công ty'),
+              decoration: const InputDecoration(labelText: 'Công ty'),
             ),
             TextField(
               controller: locationController,
-              decoration: InputDecoration(labelText: 'Địa chỉ'),
+              decoration: const InputDecoration(labelText: 'Địa chỉ'),
             ),
             TextField(
               controller: salaryController,
-              decoration: InputDecoration(labelText: 'Lương theo giờ'),
+              decoration: const InputDecoration(labelText: 'Lương theo giờ'),
               keyboardType: TextInputType.number,
             ),
             GestureDetector(
@@ -143,14 +143,14 @@ class _EditJobScreenState extends State<EditJobScreen> {
               child: AbsorbPointer( // Ngăn không cho nhập tay
                 child: TextField(
                   controller: deadlineController,
-                  decoration: InputDecoration(labelText: 'Hạn nộp (YYYY-MM-DD HH:mm)'),
+                  decoration: const InputDecoration(labelText: 'Hạn nộp (YYYY-MM-DD HH:mm)'),
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _updatePost,
-              child: Text('Cập Nhật Bài Đăng'),
+              child: const Text('Cập Nhật Bài Đăng'),
             ),
           ],
         ),

@@ -1,5 +1,4 @@
 import 'package:appsearchjob/screens/default_screen.dart';
-import 'package:appsearchjob/screens/employer_update_screen.dart';
 import 'package:appsearchjob/screens/setting_screen.dart';
 import 'package:appsearchjob/utils/auth.dart';
 import 'package:flutter/material.dart';
@@ -23,16 +22,16 @@ class _AccountScreenState extends State<AccountScreen> {
     final bool? confirmLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Xác nhận đăng xuất'),
-        content: Text('Bạn có chắc chắn muốn đăng xuất?'),
+        title: const Text('Xác nhận đăng xuất'),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Hủy'),
+            child: const Text('Hủy'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Đăng xuất'),
+            child: const Text('Đăng xuất'),
           ),
         ],
       ),
@@ -46,7 +45,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => DefaultScreen()),
+          MaterialPageRoute(builder: (context) => const DefaultScreen()),
               (route) => false,
         );
       } catch (e) {
@@ -71,11 +70,11 @@ class _AccountScreenState extends State<AccountScreen> {
         future: _authService.getCurrentUsername(), // Lấy tên người dùng
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Lỗi: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data == null) {
-            return Center(child: Text('Không tìm thấy thông tin người dùng.'));
+            return const Center(child: Text('Không tìm thấy thông tin người dùng.'));
           }
 
           final username = snapshot.data!; // Lấy tên người dùng
@@ -101,7 +100,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   const SizedBox(height: 16),
                   Text(
                     username, // Hiển thị tên người dùng
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -119,7 +118,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   _buildListTile(context, Icons.password, 'Thay đổi mật khẩu', () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ChangePasswordScreen()),
+                      MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
                     );
                   }),
                   _buildListTile(context, Icons.settings, 'Cài đặt', () {

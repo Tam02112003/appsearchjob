@@ -3,6 +3,8 @@ import '../utils/auth.dart';
 
 
 class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
@@ -21,7 +23,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập email')),
+        const SnackBar(content: Text('Vui lòng nhập email')),
       );
       return;
     }
@@ -32,7 +34,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         isCodeSent = true; // Chuyển sang bước nhập mã xác nhận
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Mã xác nhận đã được gửi đến email của bạn')),
+        const SnackBar(content: Text('Mã xác nhận đã được gửi đến email của bạn')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -48,7 +50,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (code.isEmpty || newPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
       );
       return;
     }
@@ -56,7 +58,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     try {
       await _authService.confirmResetPassword(email, code, newPassword);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đặt lại mật khẩu thành công!')),
+        const SnackBar(content: Text('Đặt lại mật khẩu thành công!')),
       );
       Navigator.pop(context); // Quay lại màn hình trước (ví dụ: màn hình đăng nhập)
     } catch (e) {
@@ -69,7 +71,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Quên mật khẩu')),
+      appBar: AppBar(title: const Text('Quên mật khẩu')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -79,32 +81,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             if (!isCodeSent) ...[
               TextField(
                 controller: emailController,
-                decoration: InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(labelText: 'Email'),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _sendResetCode,
-                child: Text('Gửi mã xác nhận'),
+                child: const Text('Gửi mã xác nhận'),
               ),
             ] else ...[
               TextField(
                 controller: codeController,
-                decoration: InputDecoration(labelText: 'Mã xác nhận'),
+                decoration: const InputDecoration(labelText: 'Mã xác nhận'),
               ),
               TextField(
                 controller: passwordController,
-                decoration: InputDecoration(labelText: 'Mật khẩu mới'),
+                decoration: const InputDecoration(labelText: 'Mật khẩu mới'),
                 obscureText: true,
               ),
               TextField(
                 controller: confirmPasswordController,
-                decoration: InputDecoration(labelText: 'Xác nhận mật khẩu mới'),
+                decoration: const InputDecoration(labelText: 'Xác nhận mật khẩu mới'),
                 obscureText: true,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _confirmResetPassword,
-                child: Text('Xác nhận'),
+                child: const Text('Xác nhận'),
               ),
             ],
           ],

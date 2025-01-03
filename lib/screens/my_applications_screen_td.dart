@@ -9,7 +9,7 @@ import 'dart:io';
 class JobApplicationsPage extends StatefulWidget {
   final String userId;
 
-  JobApplicationsPage({required this.userId});
+  const JobApplicationsPage({super.key, required this.userId});
 
   @override
   _JobApplicationsPageState createState() => _JobApplicationsPageState();
@@ -47,16 +47,16 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Danh Sách Đơn Ứng Tuyển Của Bạn')),
+      appBar: AppBar(title: const Text('Danh Sách Đơn Ứng Tuyển Của Bạn')),
       body: FutureBuilder<List<JobApplication>>(
         future: _jobApplications,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Lỗi: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Bạn không có đơn ứng nào.'));
+            return const Center(child: Text('Bạn không có đơn ứng nào.'));
           } else {
             final applications = snapshot.data!;
             return ListView.builder(
@@ -67,12 +67,12 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
                 final jobPost = _jobPosts[application.jobId];
 
                     return Card(
-                      margin: EdgeInsets.all(8.0),
+                      margin: const EdgeInsets.all(8.0),
                       child: ListTile(
                         leading: application.image != null &&
                                 application.image!.isNotEmpty
                             ? _buildImage(application.image)
-                            : Icon(Icons.person, size: 50),
+                            : const Icon(Icons.person, size: 50),
                         title: Text(application.name),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +102,7 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
   Widget _buildImage(String? imagePath) {
     // Kiểm tra xem imagePath có phải là null hay không
     if (imagePath == null || imagePath.isEmpty) {
-      return Icon(Icons.person, size: 50);
+      return Image.asset("assets/logo.png",width: 50);
     }
 
     Widget imageWidget;
@@ -127,7 +127,7 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
                 imageProvider: kIsWeb || imagePath.startsWith('http')
                     ? NetworkImage(imagePath)
                     : FileImage(File(imagePath)),
-                backgroundDecoration: BoxDecoration(color: Colors.black),
+                backgroundDecoration: const BoxDecoration(color: Colors.black),
               ),
             ),
           ),
@@ -137,43 +137,3 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
     );
   }
 }
-/*  Widget _buildImage(String imagePath) {
-    if (imagePath == null || imagePath.isEmpty) {
-      return Icon(Icons.person,
-          size: 50); // Nếu không có hình ảnh, hiển thị biểu tượng mặc định
-    }
-    Widget imageWidget;
-    if (kIsWeb) {
-      imageWidget =
-          Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
-    } else {
-      if (imagePath.startsWith('http')) {
-        imageWidget =
-            Image.network(imagePath, width: 50, height: 50, fit: BoxFit.cover);
-      } else {
-        imageWidget = Image.file(File(imagePath),
-            width: 50, height: 50, fit: BoxFit.cover);
-      }
-    }
-
-    return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) => Dialog(
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              // Đóng dialog khi nhấn vào hình
-              child: PhotoView(
-                imageProvider: kIsWeb || imagePath.startsWith('http')
-                    ? NetworkImage(imagePath)
-                    : FileImage(File(imagePath)) as ImageProvider,
-                backgroundDecoration: BoxDecoration(color: Colors.black),
-              ),
-            ),
-          ),
-        );
-      },
-      child: imageWidget,
-    );
-  }*/

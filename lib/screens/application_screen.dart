@@ -74,7 +74,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
   Future<void> _submitApplication() async {
     if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng điền đầy đủ thông tin ứng tuyển!')),
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin ứng tuyển!')),
       );
       return;
     }
@@ -82,7 +82,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
     final phoneRegex = RegExp(r'^(0[1-9]\d{8})$'); // Định dạng số điện thoại Việt Nam
     if (!phoneRegex.hasMatch(_phoneController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Số điện thoại không hợp lệ!')),
+        const SnackBar(content: Text('Số điện thoại không hợp lệ!')),
       );
       return; // Dừng hàm nếu số điện thoại không hợp lệ
     }
@@ -92,7 +92,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
       userId = await AuthService().getCurrentUserId();
       if (userId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không thể lấy userId.')),
+          const SnackBar(content: Text('Không thể lấy userId.')),
         );
         return; // Dừng hàm nếu không lấy được userId
       }
@@ -120,7 +120,7 @@ class _ApplicationScreenState extends State<ApplicationScreen> {
       await apiService.sendApplication(application);
       _notifyNewApplication(application); // Gọi hàm gửi thông báo
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đơn ứng tuyển đã được gửi!')),
+        const SnackBar(content: Text('Đơn ứng tuyển đã được gửi!')),
       );
       Navigator.pop(context);
     } catch (e) {

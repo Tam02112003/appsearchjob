@@ -32,7 +32,7 @@ class JobDetailScreen extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
+                image: const DecorationImage(
                   image: AssetImage('assets/congviec.jpg'), // Thay thế bằng hình ảnh thực tế
                   fit: BoxFit.cover,
                 ),
@@ -76,12 +76,12 @@ class JobDetailScreen extends StatelessWidget {
                   color: isDarkMode ? Colors.white54 : Colors.black54,
                 ),
                 children: [
-                  TextSpan(text: 'Hạn nộp hồ sơ: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                  const TextSpan(text: 'Hạn nộp hồ sơ: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                   TextSpan(
                     text: job.deadline != null
                         ? DateFormat('dd-MM-yyyy HH:mm').format(job.deadline!)
                         : 'Chưa có hạn nộp',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                 ],
               ),

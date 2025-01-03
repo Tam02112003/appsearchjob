@@ -5,7 +5,7 @@ import 'sign_in_screen.dart';
 class OtpScreen extends StatefulWidget {
   final String email;
 
-  OtpScreen({required this.email});
+  const OtpScreen({super.key, required this.email});
 
   @override
   _OtpScreenState createState() => _OtpScreenState();
@@ -31,7 +31,7 @@ class _OtpScreenState extends State<OtpScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập mã OTP')),
+        const SnackBar(content: Text('Vui lòng nhập mã OTP')),
       );
     }
   }
@@ -39,7 +39,7 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Nhập OTP'),backgroundColor: Colors.blue,),
+      appBar: AppBar(title: const Text('Nhập OTP'),backgroundColor: Colors.blue,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -49,32 +49,32 @@ class _OtpScreenState extends State<OtpScreen> {
             Text(
               'Vui lòng nhập mã OTP đã gửi đến email ${widget.email}',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // TextField để nhập mã OTP
             TextField(
               controller: otpController,
               decoration: InputDecoration(
                 labelText: 'Mã OTP',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.grey[200],
               ),
               keyboardType: TextInputType.number,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Nút xác thực OTP
             ElevatedButton(
               onPressed: _confirmOtp,
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                 backgroundColor: Colors.blue,
-                textStyle: TextStyle(fontSize: 16),
+                textStyle: const TextStyle(fontSize: 16),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.check), // Biểu tượng xác nhận

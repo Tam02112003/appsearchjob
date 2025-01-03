@@ -52,7 +52,7 @@ class _EmployerUpdateScreenState extends State<EmployerUpdateScreen> with Single
               offset: Offset(MediaQuery.of(context).size.width * _animation.value, 0),
               child: Container(
                 width: MediaQuery.of(context).size.width * 2, // Đảm bảo chiều rộng đủ lớn
-                child: Text(
+                child: const Text(
                   'Cập nhật thông tin nhà tuyển dụng',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                   overflow: TextOverflow.visible, // Đảm bảo văn bản không bị cắt
@@ -183,7 +183,7 @@ class _EmployerUpdateScreenState extends State<EmployerUpdateScreen> with Single
 }
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     home: EmployerUpdateScreen(),
   ));
 }

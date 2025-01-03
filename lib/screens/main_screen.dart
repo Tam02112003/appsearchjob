@@ -15,8 +15,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    JobSearchScreen(),
-    AccountScreen(),
+    const JobSearchScreen(),
+    const AccountScreen(),
   ];
 
   void _onItemTapped(int index) {

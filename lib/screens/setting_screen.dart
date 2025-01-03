@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }
@@ -46,7 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   });
                   themeProvider.toggleTheme(); // Thay đổi chế độ trong ThemeProvider
                 },
-                activeColor: Color(0xFF1DB954), // Màu cho nút bật
+                activeColor: const Color(0xFF1DB954), // Màu cho nút bật
               ),
             ),
           ],

@@ -28,7 +28,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         // Gọi phương thức thay đổi mật khẩu
         await _authService.changePassword(currentPassword, newPassword);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Mật khẩu đã được thay đổi!')),
+          const SnackBar(content: Text('Mật khẩu đã được thay đổi!')),
         );
         Navigator.pop(context); // Đóng màn hình
       } catch (e) {
@@ -50,7 +50,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Mật khẩu mới không khớp!')),
+        const SnackBar(content: Text('Mật khẩu mới không khớp!')),
       );
     }
   }

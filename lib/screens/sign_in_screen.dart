@@ -8,6 +8,8 @@ import 'package:appsearchjob/utils/auth.dart';
 import 'forgot_pass_screen.dart';
 
 class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
+
   @override
   _SignInScreenState createState() => _SignInScreenState();
 }
@@ -43,7 +45,7 @@ class _SignInScreenState extends State<SignInScreen> {
           children: [
             // Logo
             Image.asset('assets/logo.png', height: 100),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Email Field
             TextField(
@@ -54,7 +56,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     color: themeProvider.isDarkMode
                         ? Colors.white70
                         : Colors.black), // Màu chữ nhãn
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: themeProvider.isDarkMode
                     ? Colors.grey[700]
@@ -65,7 +67,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       ? Colors.white
                       : Colors.black), // Màu chữ trong TextField
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Password Field
             TextField(
@@ -77,7 +79,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     color: themeProvider.isDarkMode
                         ? Colors.white70
                         : Colors.black),
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 filled: true,
                 fillColor: themeProvider.isDarkMode
                     ? Colors.grey[700]
@@ -99,14 +101,14 @@ class _SignInScreenState extends State<SignInScreen> {
                   color:
                       themeProvider.isDarkMode ? Colors.white : Colors.black),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Hiển thị thông báo lỗi nếu có
             if (_errorMessage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: Text(
                   _errorMessage!,
-                  style: TextStyle(color: Colors.red, fontSize: 14),
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
                 ),
               ),
 
@@ -126,7 +128,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   if (error == null) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                      MaterialPageRoute(builder: (context) => const HomeScreen()),
                     );
                   } else {
                     _showErrorDialog(error);
@@ -144,15 +146,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                 backgroundColor: themeProvider.isDarkMode
-                    ? Color(0xFF1DB954)
+                    ? const Color(0xFF1DB954)
                     : Colors.blue, // Màu nút
-                textStyle: TextStyle(fontSize: 16),
+                textStyle: const TextStyle(fontSize: 16),
               ),
-              child: Text('Đăng nhập', style: TextStyle(color: Colors.white)),
+              child: const Text('Đăng nhập', style: TextStyle(color: Colors.white)),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Sign Up Option
             Row(
@@ -183,7 +185,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 24), // Tạo khoảng cách lớn hơn
+            const SizedBox(height: 24), // Tạo khoảng cách lớn hơn
             Align(
               alignment: Alignment.center,
               child: TextButton(
@@ -193,7 +195,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          ForgotPasswordScreen(), // Điều hướng đến ForgotPasswordScreen
+                          const ForgotPasswordScreen(), // Điều hướng đến ForgotPasswordScreen
                     ),
                   );
                 },
@@ -219,11 +221,11 @@ class _SignInScreenState extends State<SignInScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Lỗi'),
+          title: const Text('Lỗi'),
           content: Text(message),
           actions: [
             TextButton(
-              child: Text('Đóng'),
+              child: const Text('Đóng'),
               onPressed: () {
                 Navigator.of(context).pop();
               },

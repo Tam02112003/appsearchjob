@@ -62,7 +62,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
         companyController.text.isEmpty || locationController.text.isEmpty ||
         salaryController.text.isEmpty || deadlineController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng điền đầy đủ thông tin.')),
+        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin.')),
       );
       return; // Dừng lại nếu không hợp lệ
     }
@@ -71,7 +71,7 @@ class _JobPostScreenState extends State<JobPostScreen> {
     double? salary = double.tryParse(salaryController.text);
     if (salary == null || salary < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập lương hợp lệ')),
+        const SnackBar(content: Text('Vui lòng nhập lương hợp lệ')),
       );
       return; // Dừng hàm nếu lương không hợp lệ
     }

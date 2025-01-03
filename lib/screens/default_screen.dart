@@ -43,7 +43,7 @@ class JobSearchScreen extends StatefulWidget {
   final bool isDarkMode;
   final ValueChanged<bool> onThemeChanged;
 
-  JobSearchScreen({super.key, required this.isDarkMode, required this.onThemeChanged});
+  const JobSearchScreen({super.key, required this.isDarkMode, required this.onThemeChanged});
 
   @override
   _JobSearchScreenState createState() => _JobSearchScreenState();
@@ -53,7 +53,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
   List<JobPost> _jobPosts = [];
   List<JobPost> _filteredJobPosts = [];
   final ApiService _apiService = ApiService('https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
-  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -79,15 +79,35 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
 
   void _filterJobPosts(String query) {
     setState(() {
-      _searchQuery = query;
       _filteredJobPosts = _jobPosts.where((job) {
         final titleMatch = job.title.toLowerCase().contains(query.toLowerCase());
         final companyMatch = job.company.toLowerCase().contains(query.toLowerCase());
         final locationMatch = job.location.toLowerCase().contains(query.toLowerCase());
-        final salaryMatch = job.salary.toString().contains(query);
-        return titleMatch || companyMatch || locationMatch || salaryMatch;
+
+        return titleMatch || companyMatch || locationMatch;
       }).toList();
     });
+  }
+
+  void _openFilterScreen() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return FilterScreen(
+          onApplyFilters: (String title, String location, double minSalary, double maxSalary, DateTime? deadline) {
+            setState(() {
+              _filteredJobPosts = _jobPosts.where((job) {
+                final salaryMatch = job.salary >= minSalary && job.salary <= maxSalary;
+                final deadlineMatch = deadline == null || (job.deadline != null && job.deadline!.isBefore(deadline));
+
+                return salaryMatch && deadlineMatch;
+              }).toList();
+            });
+            Navigator.pop(context); // Đóng BottomSheet
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -129,19 +149,31 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                onChanged: _filterJobPosts, // Gọi hàm lọc khi người dùng nhập
-                decoration: InputDecoration(
-                  hintText: 'Tìm theo tên bài đăng,công ty,lương/giờ',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                    borderSide: BorderSide(color: widget.isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      onChanged: _filterJobPosts, // Gọi hàm lọc khi người dùng nhập
+                      decoration: InputDecoration(
+                        hintText: 'Tìm theo tên bài đăng,địa điểm, công ty',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                          borderSide: BorderSide(color: widget.isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
+                        ),
+                        prefixIcon: Icon(Icons.search, color: widget.isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
+                        filled: true,
+                        fillColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
+                      ),
+                      style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                    ),
                   ),
-                  prefixIcon: Icon(Icons.search, color: widget.isDarkMode ? Colors.white : const Color(0xFF4A90E2)),
-                  filled: true,
-                  fillColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
-                ),
-                style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black),
+                  const SizedBox(width: 10), // Khoảng cách giữa TextField và nút lọc
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: _openFilterScreen,
+                    color: widget.isDarkMode ? Colors.white : const Color(0xFF4A90E2),
+                  ),
+                ],
               ),
             ),
         Expanded(
@@ -172,14 +204,116 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
   }
 }
 
+
+class FilterScreen extends StatefulWidget {
+  final Function(String, String, double, double, DateTime?) onApplyFilters;
+
+  const FilterScreen({required this.onApplyFilters});
+
+  @override
+  _FilterScreenState createState() => _FilterScreenState();
+}
+
+class _FilterScreenState extends State<FilterScreen> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  double _minSalary = 0;
+  double _maxSalary = 100000; // Giả sử 100,000 là mức lương tối đa
+  DateTime? _selectedDeadline;
+
+  Future<void> _selectDeadline(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDeadline ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _selectedDeadline) {
+      setState(() {
+        _selectedDeadline = picked;
+      });
+    }
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _minSalary = 0;
+      _maxSalary = 100000; // Đặt lại mức lương tối đa
+      _selectedDeadline = null; // Đặt lại hạn nộp hồ sơ
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Lọc Công Việc',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Mức Lương: ${_minSalary.toStringAsFixed(0)} VND - ${_maxSalary.toStringAsFixed(0)} VND',
+            style: const TextStyle(fontSize: 16),
+          ),
+          RangeSlider(
+            values: RangeValues(_minSalary, _maxSalary),
+            min: 0,
+            max: 100000,
+            divisions: 100,
+            labels: RangeLabels(
+              _minSalary.toStringAsFixed(0),
+              _maxSalary.toStringAsFixed(0),
+            ),
+            onChanged: (RangeValues values) {
+              setState(() {
+                _minSalary = values.start;
+                _maxSalary = values.end;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          TextButton(
+            onPressed: () => _selectDeadline(context),
+            child: Text(
+              _selectedDeadline == null
+                  ? 'Chọn Hạn Nộp Hồ Sơ'
+                  : 'Hạn Nộp Hồ Sơ: ${DateFormat('dd-MM-yyyy').format(_selectedDeadline!)}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              widget.onApplyFilters(
+                _titleController.text,
+                _locationController.text,
+                _minSalary,
+                _maxSalary,
+                _selectedDeadline,
+              );
+            },
+            child: const Text('Áp Dụng Bộ Lọc'),
+          ),
+          TextButton(
+            onPressed: _resetFilters,
+            child: const Text('Đặt Lại Bộ Lọc', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class JobCard extends StatelessWidget {
   final JobPost job;
   final bool isDarkMode;
-  final ApiService _apiService = ApiService(
-      'https://bj2ee0qhkb.execute-api.ap-southeast-1.amazonaws.com/JobStage/job');
   final VoidCallback onRefresh;
 
-  JobCard({
+  const JobCard({
     super.key,
     required this.job,
     required this.isDarkMode,
@@ -189,7 +323,7 @@ class JobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blue, Colors.purple],
           begin: Alignment.topLeft,
@@ -206,7 +340,7 @@ class JobCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              CircleAvatar(
+              const CircleAvatar(
                 radius: 40,
                 backgroundImage: AssetImage('assets/congviec.jpg'),
               ),
@@ -226,7 +360,7 @@ class JobCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8.0),
-                    Text(
+                    Text('Công ty: '+
                       job.company,
                       style: TextStyle(
                         color: isDarkMode ? Colors.black54 : Colors.black87,
@@ -239,7 +373,7 @@ class JobCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(
+                          child: Text('Địa điểm: '+
                             job.location,
                             style: TextStyle(
                               color:
@@ -266,7 +400,7 @@ class JobCard extends StatelessWidget {
                           color: isDarkMode ? Colors.black54 : Colors.black87,
                         ),
                         children: [
-                          TextSpan(
+                          const TextSpan(
                               text: 'Hạn nộp hồ sơ: ',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold)), // Tiêu đề
@@ -294,9 +428,9 @@ class JobCard extends StatelessWidget {
                               ),
                             );
                           },
-                          child: Text('Xem Chi Tiết'),
+                          child: const Text('Xem Chi Tiết'),
                           style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                                 horizontal: 16.0, vertical: 8.0),
                             backgroundColor:
                             isDarkMode ? Colors.blueGrey : Colors.blue,

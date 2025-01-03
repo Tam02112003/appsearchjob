@@ -13,7 +13,7 @@ class MyJobPostsScreen extends StatefulWidget {
   final String userId;
   final VoidCallback onRefresh; // Thêm tham số này
 
-  MyJobPostsScreen({super.key, required this.userId, required this.onRefresh});
+  const MyJobPostsScreen({super.key, required this.userId, required this.onRefresh});
 
   @override
   _MyJobPostsScreenState createState() => _MyJobPostsScreenState();
@@ -127,7 +127,7 @@ class JobPostCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       elevation: 3,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.blue, Colors.purple],
             begin: Alignment.topLeft,
@@ -159,7 +159,7 @@ class JobPostCard extends StatelessWidget {
                     color: isDarkMode ? Colors.white54 : Colors.black87,
                   ),
                   children: [
-                    TextSpan(
+                    const TextSpan(
                         text: 'Hạn nộp hồ sơ: ',
                         style:
                             TextStyle(fontWeight: FontWeight.bold)), // Tiêu đề
@@ -214,16 +214,16 @@ class JobPostCard extends StatelessWidget {
     final bool? confirmDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Xác nhận xóa'),
-        content: Text('Bạn có chắc chắn muốn xóa bài đăng này?'),
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc chắn muốn xóa bài đăng này?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Hủy'),
+            child: const Text('Hủy'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Xóa'),
+            child: const Text('Xóa'),
           ),
         ],
       ),
@@ -233,7 +233,7 @@ class JobPostCard extends StatelessWidget {
       try {
         await _apiService.deleteItem(id);
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Đã xóa bài đăng')));
+            .showSnackBar(const SnackBar(content: Text('Đã xóa bài đăng')));
         onRefresh(); // Tải lại danh sách bài đăng
       } catch (e) {
         ScaffoldMessenger.of(context)
