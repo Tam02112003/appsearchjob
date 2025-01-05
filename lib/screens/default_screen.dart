@@ -121,7 +121,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SignInScreen()),
+                MaterialPageRoute(builder: (context) => const SignInScreen()),
               );
             },
           ),
@@ -208,7 +208,7 @@ class _JobSearchScreenState extends State<JobSearchScreen> {
 class FilterScreen extends StatefulWidget {
   final Function(String, String, double, double, DateTime?) onApplyFilters;
 
-  const FilterScreen({required this.onApplyFilters});
+  const FilterScreen({super.key, required this.onApplyFilters});
 
   @override
   _FilterScreenState createState() => _FilterScreenState();
@@ -238,7 +238,7 @@ class _FilterScreenState extends State<FilterScreen> {
   void _resetFilters() {
     setState(() {
       _minSalary = 0;
-      _maxSalary = 100000; // Đặt lại mức lương tối đa
+      _maxSalary = 1000000; // Đặt lại mức lương tối đa
       _selectedDeadline = null; // Đặt lại hạn nộp hồ sơ
     });
   }
@@ -262,7 +262,7 @@ class _FilterScreenState extends State<FilterScreen> {
           RangeSlider(
             values: RangeValues(_minSalary, _maxSalary),
             min: 0,
-            max: 100000,
+            max: 1000000,
             divisions: 100,
             labels: RangeLabels(
               _minSalary.toStringAsFixed(0),

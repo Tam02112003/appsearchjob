@@ -6,7 +6,7 @@ import '../services/api_service.dart';
 class EditJobScreen extends StatefulWidget {
   final JobPost jobPost;
 
-  const EditJobScreen({required this.jobPost});
+  const EditJobScreen({super.key, required this.jobPost});
 
   @override
   _EditJobScreenState createState() => _EditJobScreenState();
@@ -30,8 +30,11 @@ class _EditJobScreenState extends State<EditJobScreen> {
     companyController = TextEditingController(text: widget.jobPost.company);
     locationController = TextEditingController(text: widget.jobPost.location);
     salaryController = TextEditingController(text: widget.jobPost.salary.toString());
-    deadlineController = TextEditingController(text: widget.jobPost.deadline != null
-        ? DateFormat('yyyy-MM-dd HH:mm').format(widget.jobPost.deadline!)
+
+    // Khởi tạo deadlineController với hạn nộp từ jobPost
+    selectedDeadline = widget.jobPost.deadline; // Lưu hạn nộp vào biến selectedDeadline
+    deadlineController = TextEditingController(text: selectedDeadline != null
+        ? DateFormat('yyyy-MM-dd HH:mm').format(selectedDeadline!)
         : ''); // Khởi tạo deadlineController
   }
 

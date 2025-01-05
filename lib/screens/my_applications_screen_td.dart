@@ -81,8 +81,9 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
                             Text('Kinh nghiệm: ${application.experience}'),
                             Text('Số điện thoại: ${application.phone}'),
                             Text('Trạng thái: ${application.status}'),
-                            Text(
-                                'Công ty: ${jobPost?.company ?? "Đang tải..."}'), // Hiển thị tên công ty
+                            Text('Công ty: ${jobPost?.company ?? "Đang tải..."}'), // Hiển thị tên công ty
+                            Text('Địa chỉ: ${jobPost?.location ?? "Đang tải..."}'),
+                            Text('Lương: ${jobPost?.salary.toStringAsFixed(0)  ?? "Đang tải..."}' + ' VND/giờ'),
                           ],
                         ),
                         onTap: () {
