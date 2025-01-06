@@ -80,7 +80,25 @@ class _JobApplicationsPageState extends State<JobApplicationsPage> {
                             Text('Trình độ: ${application.education}'),
                             Text('Kinh nghiệm: ${application.experience}'),
                             Text('Số điện thoại: ${application.phone}'),
-                            Text('Trạng thái: ${application.status}'),
+                            /*Text('Trạng thái: ${application.status}'),*/
+                            Row(
+                              children: [
+                                const Text('Trạng thái: '),
+                                Text(
+                                  application.status,
+                                  style: TextStyle(
+                                    color: application.status == "Đang chờ duyệt"
+                                        ? Colors.amber
+                                        : application.status == "Chấp nhận"
+                                        ? Colors.green
+                                        : application.status == "Từ chối"
+                                        ? Colors.red
+                                        : Colors.black, // Mặc định nếu trạng thái không khớp
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                             Text('Công ty: ${jobPost?.company ?? "Đang tải..."}'), // Hiển thị tên công ty
                             Text('Địa chỉ: ${jobPost?.location ?? "Đang tải..."}'),
                             Text('Lương: ${jobPost?.salary.toStringAsFixed(0)  ?? "Đang tải..."}' + ' VND/giờ'),
